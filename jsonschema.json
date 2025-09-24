@@ -1,0 +1,949 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ChainComplete": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chain_name": {
+          "type": "string"
+        },
+        "token_symbol": {
+          "type": "string"
+        },
+        "chain_description": {
+          "type": ["string", "null"]
+        },
+        "template_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "consensus_mechanism": {
+          "type": "string"
+        },
+        "token_total_supply": {
+          "type": "integer"
+        },
+        "graduation_threshold_usd": {
+          "type": "number"
+        },
+        "creation_fee_cnpy": {
+          "type": "number"
+        },
+        "initial_cnpy_reserve": {
+          "type": "number"
+        },
+        "initial_token_supply": {
+          "type": "integer"
+        },
+        "bonding_curve_slope": {
+          "type": "number"
+        },
+        "scheduled_launch_time": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "actual_launch_time": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "creator_initial_purchase_cnpy": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "pending_launch", "virtual_active", "graduated", "failed"]
+        },
+        "is_graduated": {
+          "type": "boolean"
+        },
+        "graduation_time": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "chain_id": {
+          "type": ["string", "null"]
+        },
+        "genesis_hash": {
+          "type": ["string", "null"]
+        },
+        "validator_min_stake": {
+          "type": "number"
+        },
+        "created_by": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "template": {
+          "$ref": "#/$defs/ChainTemplate"
+        },
+        "creator": {
+          "$ref": "#/$defs/User"
+        },
+        "repository": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChainRepository"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "social_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ChainSocialLink"
+          }
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ChainAsset"
+          }
+        },
+        "virtual_pool": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VirtualPool"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id", "chain_name", "token_symbol", "template_id", "consensus_mechanism",
+        "token_total_supply", "graduation_threshold_usd", "creation_fee_cnpy",
+        "initial_cnpy_reserve", "initial_token_supply", "bonding_curve_slope",
+        "creator_initial_purchase_cnpy", "status", "is_graduated", "validator_min_stake",
+        "created_by", "created_at", "updated_at"
+      ]
+    },
+    "ChainTemplate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "template_name": {
+          "type": "string"
+        },
+        "template_description": {
+          "type": "string"
+        },
+        "template_category": {
+          "type": "string"
+        },
+        "supported_languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "default_modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "default_consensus": {
+          "type": "string"
+        },
+        "default_token_supply": {
+          "type": "integer"
+        },
+        "default_validator_count": {
+          "type": "integer"
+        },
+        "complexity_level": {
+          "type": "string",
+          "enum": ["beginner", "intermediate", "advanced"]
+        },
+        "estimated_deployment_time_minutes": {
+          "type": "integer"
+        },
+        "documentation_url": {
+          "type": ["string", "null"]
+        },
+        "example_chains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "version": {
+          "type": "string"
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "template_name", "template_description", "template_category",
+        "supported_languages", "default_modules", "required_modules",
+        "default_consensus", "default_token_supply", "default_validator_count",
+        "complexity_level", "estimated_deployment_time_minutes", "version",
+        "is_active", "created_at", "updated_at"
+      ]
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "wallet_address": {
+          "type": "string"
+        },
+        "email": {
+          "type": ["string", "null"]
+        },
+        "username": {
+          "type": ["string", "null"]
+        },
+        "display_name": {
+          "type": ["string", "null"]
+        },
+        "bio": {
+          "type": ["string", "null"]
+        },
+        "avatar_url": {
+          "type": ["string", "null"]
+        },
+        "website_url": {
+          "type": ["string", "null"]
+        },
+        "twitter_handle": {
+          "type": ["string", "null"]
+        },
+        "github_username": {
+          "type": ["string", "null"]
+        },
+        "telegram_handle": {
+          "type": ["string", "null"]
+        },
+        "is_verified": {
+          "type": "boolean"
+        },
+        "verification_tier": {
+          "type": "string",
+          "enum": ["basic", "verified", "premium"]
+        },
+        "total_chains_created": {
+          "type": "integer"
+        },
+        "total_cnpy_invested": {
+          "type": "number"
+        },
+        "reputation_score": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "wallet_address", "is_verified", "verification_tier",
+        "total_chains_created", "total_cnpy_invested", "reputation_score", "created_at"
+      ]
+    },
+    "ChainRepository": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chain_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "github_url": {
+          "type": "string"
+        },
+        "repository_name": {
+          "type": "string"
+        },
+        "repository_owner": {
+          "type": "string"
+        },
+        "default_branch": {
+          "type": "string"
+        },
+        "is_connected": {
+          "type": "boolean"
+        },
+        "auto_upgrade_enabled": {
+          "type": "boolean"
+        },
+        "upgrade_trigger": {
+          "type": "string",
+          "enum": ["tag_release", "main_push", "manual"]
+        },
+        "last_sync_commit_hash": {
+          "type": ["string", "null"]
+        },
+        "last_sync_time": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "build_status": {
+          "type": "string",
+          "enum": ["pending", "building", "success", "failed"]
+        },
+        "last_build_time": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "chain_id", "github_url", "repository_name", "repository_owner",
+        "default_branch", "is_connected", "auto_upgrade_enabled", "build_status",
+        "created_at", "updated_at"
+      ]
+    },
+    "ChainSocialLink": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chain_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": ["string", "null"]
+        },
+        "is_verified": {
+          "type": "boolean"
+        },
+        "follower_count": {
+          "type": "integer"
+        },
+        "last_metrics_update": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "display_order": {
+          "type": "integer"
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "chain_id", "platform", "url", "is_verified", "follower_count",
+        "display_order", "is_active", "created_at", "updated_at"
+      ]
+    },
+    "ChainAsset": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chain_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "asset_type": {
+          "type": "string",
+          "enum": ["logo", "banner", "screenshot", "video", "whitepaper", "documentation"]
+        },
+        "file_name": {
+          "type": "string"
+        },
+        "file_url": {
+          "type": "string"
+        },
+        "file_size_bytes": {
+          "type": ["integer", "null"]
+        },
+        "mime_type": {
+          "type": ["string", "null"]
+        },
+        "title": {
+          "type": ["string", "null"]
+        },
+        "description": {
+          "type": ["string", "null"]
+        },
+        "alt_text": {
+          "type": ["string", "null"]
+        },
+        "display_order": {
+          "type": "integer"
+        },
+        "is_primary": {
+          "type": "boolean"
+        },
+        "is_featured": {
+          "type": "boolean"
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "moderation_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"]
+        },
+        "moderation_notes": {
+          "type": ["string", "null"]
+        },
+        "uploaded_by": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "chain_id", "asset_type", "file_name", "file_url", "display_order",
+        "is_primary", "is_featured", "is_active", "moderation_status",
+        "uploaded_by", "created_at", "updated_at"
+      ]
+    },
+    "VirtualPool": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chain_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "cnpy_reserve": {
+          "type": "number"
+        },
+        "token_reserve": {
+          "type": "integer"
+        },
+        "current_price_cnpy": {
+          "type": "number"
+        },
+        "market_cap_usd": {
+          "type": "number"
+        },
+        "total_volume_cnpy": {
+          "type": "number"
+        },
+        "total_transactions": {
+          "type": "integer"
+        },
+        "unique_traders": {
+          "type": "integer"
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "price_24h_change_percent": {
+          "type": "number"
+        },
+        "volume_24h_cnpy": {
+          "type": "number"
+        },
+        "high_24h_cnpy": {
+          "type": "number"
+        },
+        "low_24h_cnpy": {
+          "type": "number"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "chain_id", "cnpy_reserve", "token_reserve", "current_price_cnpy",
+        "market_cap_usd", "total_volume_cnpy", "total_transactions", "unique_traders",
+        "is_active", "created_at", "updated_at"
+      ]
+    },
+    "VirtualPoolTransaction": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "virtual_pool_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chain_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "transaction_type": {
+          "type": "string",
+          "enum": ["buy", "sell"]
+        },
+        "cnpy_amount": {
+          "type": "number"
+        },
+        "token_amount": {
+          "type": "integer"
+        },
+        "price_per_token_cnpy": {
+          "type": "number"
+        },
+        "trading_fee_cnpy": {
+          "type": "number"
+        },
+        "slippage_percent": {
+          "type": "number"
+        },
+        "transaction_hash": {
+          "type": ["string", "null"]
+        },
+        "block_height": {
+          "type": ["integer", "null"]
+        },
+        "gas_used": {
+          "type": ["integer", "null"]
+        },
+        "pool_cnpy_reserve_after": {
+          "type": "number"
+        },
+        "pool_token_reserve_after": {
+          "type": "integer"
+        },
+        "market_cap_after_usd": {
+          "type": "number"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "virtual_pool_id", "chain_id", "user_id", "transaction_type",
+        "cnpy_amount", "token_amount", "price_per_token_cnpy", "trading_fee_cnpy",
+        "pool_cnpy_reserve_after", "pool_token_reserve_after", "market_cap_after_usd",
+        "created_at"
+      ]
+    },
+    "Pagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pages": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["page", "limit", "total", "pages"]
+    },
+    "CreateChainRequest": {
+      "type": "object",
+      "properties": {
+        "chain_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "token_symbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "pattern": "^[A-Z][A-Z0-9]*$"
+        },
+        "chain_description": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "template_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "consensus_mechanism": {
+          "type": "string",
+          "maxLength": 50,
+          "default": "nestbft"
+        },
+        "token_total_supply": {
+          "type": "integer",
+          "minimum": 1000000,
+          "maximum": 1000000000000,
+          "default": 1000000000
+        },
+        "graduation_threshold_usd": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 10000000,
+          "default": 50000.00
+        },
+        "creation_fee_cnpy": {
+          "type": "number",
+          "minimum": 0,
+          "default": 100.00000000
+        },
+        "initial_cnpy_reserve": {
+          "type": "number",
+          "minimum": 1000,
+          "default": 10000.00000000
+        },
+        "initial_token_supply": {
+          "type": "integer",
+          "minimum": 100000,
+          "default": 800000000
+        },
+        "bonding_curve_slope": {
+          "type": "number",
+          "minimum": 0.000000001,
+          "default": 0.00000001
+        },
+        "validator_min_stake": {
+          "type": "number",
+          "minimum": 100,
+          "default": 1000.00000000
+        },
+        "creator_initial_purchase_cnpy": {
+          "type": "number",
+          "minimum": 0,
+          "default": 0
+        }
+      },
+      "required": ["chain_name", "token_symbol", "template_id"],
+      "additionalProperties": false
+    },
+    "UpdateDevelopmentIntegrationRequest": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "object",
+          "properties": {
+            "github_url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://github\\.com/"
+            },
+            "repository_name": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "repository_owner": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "default_branch": {
+              "type": "string",
+              "maxLength": 100,
+              "default": "main"
+            },
+            "auto_upgrade_enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "upgrade_trigger": {
+              "type": "string",
+              "enum": ["tag_release", "main_push", "manual"],
+              "default": "tag_release"
+            }
+          },
+          "required": ["github_url", "repository_name", "repository_owner"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["repository"],
+      "additionalProperties": false
+    },
+    "UpdateDocumentationRequest": {
+      "type": "object",
+      "properties": {
+        "chain_description": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "social_links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "platform": {
+                "type": "string",
+                "enum": ["twitter", "telegram", "discord", "website", "whitepaper", "documentation", "medium", "youtube"],
+                "maxLength": 50
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "display_name": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "display_order": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+              }
+            },
+            "required": ["platform", "url"],
+            "additionalProperties": false
+          },
+          "maxItems": 20
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_type": {
+                "type": "string",
+                "enum": ["logo", "banner", "screenshot", "video", "whitepaper", "documentation"]
+              },
+              "file_name": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "file_url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "file_size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "mime_type": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "alt_text": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "display_order": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+              },
+              "is_primary": {
+                "type": "boolean",
+                "default": false
+              },
+              "is_featured": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "required": ["asset_type", "file_name", "file_url"],
+            "additionalProperties": false
+          },
+          "maxItems": 50
+        }
+      },
+      "additionalProperties": false
+    },
+    "UpdateEconomicsRequest": {
+      "type": "object",
+      "properties": {
+        "graduation_threshold_usd": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 10000000
+        },
+        "creation_fee_cnpy": {
+          "type": "number",
+          "minimum": 0
+        },
+        "initial_cnpy_reserve": {
+          "type": "number",
+          "minimum": 1000
+        },
+        "initial_token_supply": {
+          "type": "integer",
+          "minimum": 100000
+        },
+        "bonding_curve_slope": {
+          "type": "number",
+          "minimum": 0.000000001
+        },
+        "creator_initial_purchase_cnpy": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "UpdateSchedulingRequest": {
+      "type": "object",
+      "properties": {
+        "scheduled_launch_time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "pending_launch"],
+          "description": "Can only transition from draft to pending_launch"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LaunchChainRequest": {
+      "type": "object",
+      "properties": {
+        "payment_confirmation": {
+          "type": "object",
+          "properties": {
+            "transaction_hash": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 66
+            },
+            "amount_cnpy": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": ["transaction_hash", "amount_cnpy"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["payment_confirmation"],
+      "additionalProperties": false
+    },
+    "ApiResponse": {
+      "type": "object",
+      "properties": {
+        "data": {},
+        "pagination": {
+          "$ref": "#/$defs/Pagination"
+        }
+      },
+      "required": ["data"]
+    },
+    "ApiError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["field", "message"]
+                  }
+                }
+              ]
+            }
+          },
+          "required": ["code", "message"]
+        }
+      },
+      "required": ["error"]
+    }
+  }
+}

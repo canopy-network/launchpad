@@ -1,0 +1,33 @@
+* What is the golang standard tool to translate an openapi 3.0+ spec into golang server code
+** Golang Tools for OpenAPI 3.0+ Server Generation
+
+*** Official Go Tools
+Unfortunately, there is **no official standard tool** in the Go standard library or official Go toolchain for translating OpenAPI 3.0+ specifications into Go server code.
+
+*** Popular Third-Party Tools
+
+**** oapi-codegen
+- **Most widely adopted** community tool for OpenAPI 3.0+ to Go generation
+- Generates both client and server code
+- Supports Gin, Chi, Gorilla Mux, and other popular Go web frameworks
+- Active maintenance and good community support
+
+**** go-swagger
+- Primarily focused on OpenAPI 2.0 (Swagger 2.0)
+- Limited OpenAPI 3.0+ support
+- More mature but less suitable for modern OpenAPI specs
+
+**** deepmap/oapi-codegen
+- GitHub: https://github.com/deepmap/oapi-codegen
+- Generates type-safe Go code from OpenAPI 3.0+ specs
+- Supports multiple HTTP router backends
+- Can generate both server stubs and client libraries
+
+*** Recommended Approach
+Since there's no standard Go tool, **oapi-codegen** is the de facto standard in the Go community for OpenAPI 3.0+ server generation due to:
+- Active development and maintenance
+- Good documentation
+- Wide framework support
+- Strong type safety
+- Regular updates for OpenAPI spec compliance
+

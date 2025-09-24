@@ -1,0 +1,141 @@
+Jorge - Pocket Scan - Indexer - Golang / SQL
+Jorge #2 - pump.fun bonding curve - solana - rust #1, go #2
+Juan - FE english not so good
+Adrian - FE
+Albin - FE
+^ All 3 on revamped block explorer + webwallet
+70% done
+Should be done in 2 weeks
+
+Nothing for them to do until design is done
+
+
+Rafael - Designer Lead - Works with adam for product direction
+Superapp channel -> design thread
+
+Albin on DEX FE next - Albin vacatin in one week - might be best person to work on wallet
+given keyfile - create transacionts - LP prov, LP withdraw, transfers
+
+Enture UI/UX for super-app
+our job is to faciliate vision and make sure backend meets specification
+deliver before Juan Adrian finish FE
+Elizer - 
+
+DEVOPS
+Lowell
+Kael - maintain snapshots, public rpc, noderunner issues
+seeds are down? Lowell + Kael
+
+Working on deployment for virtual chains - spec out CI/CD
+
+Backends:
+
+Launchpad - Where to launch chains - virtual trading - create genesis - 50,000 CNPY
+SuperApp - BE info needed for login, key stores
+
+CI/CD - genesis query / node creation
+
+Indexer - 
+
+Wallet (wallet channel on super app) preseign TX, send to superapp backend - LB
+
+DB decisions to make
+
+over next week: meeting invites
+
+#+TITLE: Project Status & Team Assignments
+
+* Milestones
+Define specs for launchpad account management, DEX
+Delivering first UI
+* Roadmap
+** 
+* Andrew:
+** Not too spec heavy, rapid iteration instead
+
+* Team Members & Current Tasks
+
+** Backend Development
+*** Jorge
+- Pocket Scan - Indexer (Golang/SQL)
+- No blockers
+*** Marizan
+- pump.fun bonding curve - Solana
+  - Rust, Go
+
+** Frontend Development
+*** Block Explorer + Web Wallet Team (70% complete, 2 weeks remaining)
+- *Juan* - FE (English language barrier noted)
+- *Adrian* - FE  
+- *Albin* - FE
+- *Status:* Waiting on design completion before proceeding
+
+*** DEX Frontend
+- *Albin* (next assignment)
+  - Note: Vacation in one week
+  - May be best candidate for wallet work given keyfile experience
+  - Tasks: Create transactions, LP provision, LP withdrawal, transfers
+
+** Design & Product
+*** Rafael - Lead Designer
+- Works with Adam for product direction
+- Communication via: Superapp channel → design thread
+- Responsible for entire UI/UX for super-app
+- Goal: Deliver before Juan & Adrian complete FE
+  
+** DevOps
+*** Lowell & Kael
+- *Kael responsibilities:*
+  - Maintain snapshots
+  - Public RPC maintenance
+  - Node runner issue resolution
+  - Seeds status (currently down?) - coordinate with Lowell
+- *Current project:* Virtual chains deployment
+  - Spec out CI/CD pipeline
+
+** Backend Systems
+*** Key Backend Components
+1. *Launchpad*
+   - Virtual chain launching
+   - Virtual trading
+   - Genesis creation
+   - 50,000 CNPY allocation
+
+2. *SuperApp Backend*
+   - Login information
+   - Key stores management
+
+3. *CI/CD System*
+   - Genesis queries
+   - Node creation
+
+4. *Indexer* (Jorge Cuesta's primary focus)
+
+5. *Wallet Backend*
+   - Wallet channel integration with super app
+   - Pre-sign transactions
+   - Send to superapp backend
+   - Load balancing
+   - Stake for delegation
+
+* Pending Decisions
+- Database architecture decisions
+- Meeting schedules for next week
+
+* Key Objectives
+- Facilitate vision alignment
+- Ensure backend meets specifications
+- Coordinate delivery timelines between teams
+  
+* Design Plan
+https://www.figma.com/board/xXUL40DjrkvBLxo2JCo6pk/Canopy-Super-App-Research-Playground?node-id=15-1453&t=bY4AU2aB5IcamTms-1
+If design delayed, frontend can work on 
+** 2 weeks of launchpad
+* Front End Meeting
+** FE work starts Oct 9th when Albin gets back
+
+Two weeks: Marizan signing 
+Jorge: Indexed items
+* Infra
+** Staging right away
+** 
