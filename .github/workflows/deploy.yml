@@ -19,4 +19,6 @@ jobs:
           script: |
             cd launchpad
             git pull origin main
+            docker-compose stop app
+            docker system prune -a --volumes -f
             docker-compose up --build app
