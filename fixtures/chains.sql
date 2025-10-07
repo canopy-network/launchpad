@@ -1,0 +1,13 @@
+-- Chain fixtures for Launchpad API testing and development
+-- Sample chains in various states (draft, pending, active, graduated)
+
+INSERT INTO chains (id, chain_name, token_symbol, chain_description, template_id, consensus_mechanism, token_total_supply, graduation_threshold, creation_fee_cnpy, initial_cnpy_reserve, initial_token_supply, bonding_curve_slope, scheduled_launch_time, actual_launch_time, creator_initial_purchase_cnpy, status, is_graduated, graduation_time, chain_id, genesis_hash, validator_min_stake, created_by) VALUES
+    ('550e8400-e29b-41d4-a716-446655442001', 'DeFiSwap Pro', 'DEFISWAP', 'Next-generation DEX with advanced trading features and yield farming', '550e8400-e29b-41d4-a716-446655441001', 'tendermint', 1000000000, 75000.00, 150.00000000, 15000.00000000, 800000000, 0.00000002, '2024-02-15 15:00:00+00', '2024-02-15 15:00:00+00', 5000.00000000, 'virtual_active', false, null, 'defiswap-1', 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456', 2000.00000000, '550e8400-e29b-41d4-a716-446655440000'),
+
+    ('550e8400-e29b-41d4-a716-446655442002', 'MetaRealm Gaming', 'META', 'Immersive gaming metaverse with player-owned economies', '550e8400-e29b-41d4-a716-446655441002', 'delegated-pos', 500000000, 100000.00, 200.00000000, 20000.00000000, 400000000, 0.00000003, '2024-03-01 12:00:00+00', '2024-03-01 12:00:00+00', 8000.00000000, 'graduated', true, '2024-03-15 18:30:00+00', 'metarealm-1', 'b2c3d4e5f6a78901234567890123456789abcdef01234567890abcdef1234567', 1500.00000000, '550e8400-e29b-41d4-a716-446655440001'),
+
+    ('550e8400-e29b-41d4-a716-446655442003', 'SupplyTrace Enterprise', 'TRACE', 'Enterprise supply chain tracking with full audit capabilities', '550e8400-e29b-41d4-a716-446655441003', 'pbft', 100000000, 200000.00, 500.00000000, 50000.00000000, 80000000, 0.00000001, null, null, 0, 'draft', false, null, null, null, 5000.00000000, '550e8400-e29b-41d4-a716-446655440002'),
+
+    ('550e8400-e29b-41d4-a716-446655442004', 'SocialVerse', 'SOCIAL', 'Decentralized social platform where creators own their content', '550e8400-e29b-41d4-a716-446655441004', 'nestbft', 2000000000, 60000.00, 120.00000000, 12000.00000000, 1600000000, 0.000000015, '2024-02-20 10:00:00+00', null, 3000.00000000, 'pending_launch', false, null, null, null, 800.00000000, '550e8400-e29b-41d4-a716-446655440003'),
+
+    ('550e8400-e29b-41d4-a716-446655442005', 'TestChain Alpha', 'TEST', 'Testing and experimentation chain for developers', '550e8400-e29b-41d4-a716-446655441005', 'tendermint', 1000000000, 25000.00, 50.00000000, 5000.00000000, 800000000, 0.00000001, null, null, 0, 'draft', false, null, null, null, 500.00000000, '550e8400-e29b-41d4-a716-446655440000');

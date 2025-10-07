@@ -1,0 +1,9 @@
+-- Chain template fixtures for Launchpad API testing and development
+-- Provides pre-configured blockchain templates for different programming languages
+
+INSERT INTO chain_templates (id, template_name, template_description, template_category, supported_language, default_token_supply, documentation_url, example_chains, version, is_active) VALUES
+    ('550e8400-e29b-41d4-a716-446655441001', 'Python Example Template', 'High-level blockchain development with Python for rapid prototyping and data science integration', 'general', 'python', 1000000000, 'https://docs.scanopy.io/templates/python', '{"Example Chain 1", "Example Chain 2"}', '1.0.0', true),
+    ('550e8400-e29b-41d4-a716-446655441002', 'Golang Example Template', 'High-performance blockchain in Go with excellent concurrency and networking capabilities', 'defi', 'golang', 1000000000, 'https://docs.scanopy.io/templates/golang', '{"Example Chain 1", "Example Chain 2"}', '1.2.0', true),
+    ('550e8400-e29b-41d4-a716-446655441003', 'TypeScript Example Template', 'Modern web3 development with TypeScript for type-safe smart contracts and dApps', 'social', 'typescript', 2000000000, 'https://docs.scanopy.io/templates/typescript', '{"Example Chain 1", "Example Chain 2"}', '1.1.0', true),
+    ('550e8400-e29b-41d4-a716-446655441004', 'Kotlin Example Template', 'JVM-powered blockchain with Kotlin for Android and cross-platform mobile integration', 'gaming', 'kotlin', 500000000, 'https://docs.scanopy.io/templates/kotlin', '{"Example Chain 1", "Example Chain 2"}', '1.0.0', true),
+    ('550e8400-e29b-41d4-a716-446655441005', 'C# Example Template', 'Enterprise blockchain development with C# and .NET framework for Windows integration', 'enterprise', 'csharp', 100000000, 'https://docs.scanopy.io/templates/csharp', '{"Example Chain 1", "Example Chain 2"}', '1.0.1', true);

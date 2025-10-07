@@ -1,0 +1,203 @@
+version: '3'
+
+# Integration test tasks for launchpad
+# Run with: task -t tests/integration/Taskfile.yml <task-name>
+# Or from tests/integration/: task <task-name>
+
+vars:
+  TEST_FLAGS: -v -count=1 -tags=integration
+  BASE_URL: http://localhost:3000
+  TEST_USER_ID: 550e8400-e29b-41d4-a716-446655440000
+
+tasks:
+  chain:
+    desc: Run chain creation integration tests
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestCreateChain .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  chain:validation:
+    desc: Run chain validation integration tests
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestCreateChainValidation .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  chain:no-template:
+    desc: Run chain creation without template test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestCreateChainWithoutTemplate .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  get-chains:
+    desc: Run get chains list test (uses fixtures)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestGetChains \.
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  get-templates:
+    desc: Run get templates list test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestGetTemplates .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  # Virtual Pool tests
+  virtual-pool:
+    desc: Run virtual pool API tests (single chain pool)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestVirtualPoolAPI .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  virtual-pools:
+    desc: Run get all virtual pools test (list endpoint)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestGetVirtualPools .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  virtual-pools:all:
+    desc: Run all virtual pool tests
+    cmds:
+      - go test {{.TEST_FLAGS}} -run "TestVirtualPoolAPI|TestGetVirtualPools" .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  # Repository-level tests (using fixtures with transactions)
+  repo:user:
+    desc: Run user repository tests with fixtures
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestUserFixture .
+
+  repo:all:
+    desc: Run all repository-level tests (fast, no HTTP)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run "TestUserFixture|TestMultipleUsers" .
+
+  # Worker tests
+  worker:newblock:
+    desc: Run new block worker integration tests
+    cmds:
+      - DATABASE_URL="postgres://launchpad:launchpad123@localhost:5432/launchpad?sslmode=disable" go test {{.TEST_FLAGS}} -run TestNewBlockWorkerProcessing .
+
+  worker:all:
+    desc: Run all worker integration tests
+    cmds:
+      - DATABASE_URL="postgres://launchpad:launchpad123@localhost:5432/launchpad?sslmode=disable" go test {{.TEST_FLAGS}} -run "TestNewBlockWorkerProcessing" .
+
+  email:send:
+    desc: Send real email to SMTP_USERNAME (tests actual email delivery)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestSendEmailToSMTPUser .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  email:invalid:
+    desc: Test invalid email address validation
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestSendEmailInvalidRecipient .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  email:multiple:
+    desc: Test sending multiple emails to same address
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestSendEmailMultipleTimes .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  email:all:
+    desc: Run all real email tests (WARNING, sends real emails)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestSendEmail .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  auth:
+    desc: Run all auth integration tests (email verification flow)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestEmailAuth .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  auth:validation:
+    desc: Run auth validation tests
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestEmailAuthValidation .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  all:
+    desc: Run all integration tests
+    cmds:
+      - go test {{.TEST_FLAGS}} .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  all:verbose:
+    desc: Run all integration tests with verbose output
+    cmds:
+      - go test -v -count=1 -tags=integration -json . | jq -r 'select(.Output) | .Output' | sed 's/\\n//'
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  health-check:
+    desc: Check if the API server is running
+    cmds:
+      - |
+        echo "Checking API health at {{.BASE_URL}}/health..."
+        curl -s {{.BASE_URL}}/health | jq .
+    silent: false
+    ignore_error: false
+
+  setup:
+    desc: Setup integration test environment (check server is running)
+    cmds:
+      - task: health-check
+      - echo "✅ Integration tests use code-based fixtures (not SQL fixtures)"
+
+  watch:
+    desc: Watch and re-run tests on file changes
+    cmds:
+      - |
+        echo "Watching for changes in tests/integration/..."
+        find . -name "*.go" | entr -c go test {{.TEST_FLAGS}} .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  clean:
+    desc: Clean test cache
+    cmds:
+      - go clean -testcache
+      - echo "Test cache cleared"
+
+  coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - go test -v -count=1 -tags=integration -coverprofile=coverage.out .
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"

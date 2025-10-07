@@ -27,8 +27,9 @@
         "token_total_supply": {
           "type": "integer"
         },
-        "graduation_threshold_usd": {
-          "type": "number"
+        "graduation_threshold": {
+          "type": "number",
+          "description": "Amount in CNPY required for graduation"
         },
         "creation_fee_cnpy": {
           "type": "number"
@@ -126,7 +127,7 @@
       },
       "required": [
         "id", "chain_name", "token_symbol", "template_id", "consensus_mechanism",
-        "token_total_supply", "graduation_threshold_usd", "creation_fee_cnpy",
+        "token_total_supply", "graduation_threshold", "creation_fee_cnpy",
         "initial_cnpy_reserve", "initial_token_supply", "bonding_curve_slope",
         "creator_initial_purchase_cnpy", "status", "is_graduated", "validator_min_stake",
         "created_by", "created_at", "updated_at"
@@ -148,11 +149,8 @@
         "template_category": {
           "type": "string"
         },
-        "supported_languages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+        "supported_language": {
+          "type": "string"
         },
         "default_modules": {
           "type": "array",
@@ -166,20 +164,7 @@
             "type": "string"
           }
         },
-        "default_consensus": {
-          "type": "string"
-        },
         "default_token_supply": {
-          "type": "integer"
-        },
-        "default_validator_count": {
-          "type": "integer"
-        },
-        "complexity_level": {
-          "type": "string",
-          "enum": ["beginner", "intermediate", "advanced"]
-        },
-        "estimated_deployment_time_minutes": {
           "type": "integer"
         },
         "documentation_url": {
@@ -208,9 +193,8 @@
       },
       "required": [
         "id", "template_name", "template_description", "template_category",
-        "supported_languages", "default_modules", "required_modules",
-        "default_consensus", "default_token_supply", "default_validator_count",
-        "complexity_level", "estimated_deployment_time_minutes", "version",
+        "supported_language", "default_modules", "required_modules",
+        "default_token_supply", "version",
         "is_active", "created_at", "updated_at"
       ]
     },
@@ -650,10 +634,11 @@
           "maximum": 1000000000000,
           "default": 1000000000
         },
-        "graduation_threshold_usd": {
+        "graduation_threshold": {
           "type": "number",
           "minimum": 1000,
           "maximum": 10000000,
+          "description": "Amount in CNPY required for graduation",
           "default": 50000.00
         },
         "creation_fee_cnpy": {
@@ -687,7 +672,7 @@
           "default": 0
         }
       },
-      "required": ["chain_name", "token_symbol", "template_id"],
+      "required": ["chain_name", "token_symbol"],
       "additionalProperties": false
     },
     "UpdateDevelopmentIntegrationRequest": {
@@ -829,10 +814,11 @@
     "UpdateEconomicsRequest": {
       "type": "object",
       "properties": {
-        "graduation_threshold_usd": {
+        "graduation_threshold": {
           "type": "number",
           "minimum": 1000,
-          "maximum": 10000000
+          "maximum": 10000000,
+          "description": "Amount in CNPY required for graduation"
         },
         "creation_fee_cnpy": {
           "type": "number",
