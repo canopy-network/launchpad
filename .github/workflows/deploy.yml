@@ -19,3 +19,4 @@ jobs:
           script: |
             cd launchpad
             git pull origin main
+            docker-compose up --build app
