@@ -29,7 +29,7 @@ type SMTPEmailService struct {
 // NewSMTPEmailService creates a new SMTP email service with Fastmail settings
 func NewSMTPEmailService() *SMTPEmailService {
 	return &SMTPEmailService{
-		smtpHost:     "smtp.fastmail.com",
+		smtpHost:     os.Getenv("SMTP_SERVER"),
 		smtpPort:     "587", // TLS port
 		smtpUsername: os.Getenv("SMTP_USERNAME"),
 		smtpPassword: os.Getenv("SMTP_PASSWORD"),
