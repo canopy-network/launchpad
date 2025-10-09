@@ -26,126 +26,39 @@ launchpad/
 │   ├── services/        # Business logic
 │   └── validators/      # Request validation
 ├── pkg/                 # Public packages
-├── api/                 # API documentation
 ├── tests/               # Test files
 ├── migrations/          # Database migrations
-├── configs/             # Configuration files
+├── templates/           # Email templates
 └── scripts/             # Development scripts
 ```
 
-## API Endpoints
-
-### Core Chain Operations
-
-- `GET /api/v1/chains` - List chains with filtering and pagination
-- `GET /api/v1/chains/{id}` - Get specific chain with relations
-- `POST /api/v1/chains` - Create new chain
-- `DELETE /api/v1/chains/{id}` - Delete chain (draft only)
-
-### Multi-Step Update Endpoints
-
-- `PUT /api/v1/chains/{id}/development-integration` - Step 3: Development Integration
-- `PUT /api/v1/chains/{id}/documentation` - Step 4: Project Documentation
-- `PUT /api/v1/chains/{id}/economics` - Step 5: Launch Economics
-- `PUT /api/v1/chains/{id}/scheduling` - Step 6: Launch Scheduling
-- `POST /api/v1/chains/{id}/launch` - Finalize chain launch
-
-### Additional Endpoints
-
-- `GET /api/v1/chains/{id}/virtual-pool` - Get virtual pool data
-- `GET /api/v1/chains/{id}/transactions` - Get trading transactions
-- `GET /health` - Health check
-
 ## Quick Start
-
-### Prerequisites
-
-- Go 1.21 or higher
-- PostgreSQL 12+
-- Docker and Docker Compose (optional)
 
 ### Local Development
 
-1. **Clone and setup:**
-   ```bash
-   git clone <repository-url>
-   cd launchpad
-   make setup
-   ```
-
-2. **Configure environment:**
+1. **Configure environment:**
    ```bash
    cp .env.example .env
-   # Edit .env with your database and JWT secret
    ```
 
-3. **Run with Docker Compose:**
+2. **Run with Docker Compose:**
    ```bash
    make docker-up
    ```
 
-4. **Or run locally:**
+3. **Apply DB Schema**
    ```bash
-   # Ensure PostgreSQL is running with the schema loaded
-   make run
+   make migrate-up
    ```
 
-### Using Docker
-
-**Build and start all services:**
-```bash
-docker-compose up -d
-```
-
-**View logs:**
-```bash
-docker-compose logs -f
-```
-
-**Stop services:**
-```bash
-docker-compose down
-```
-
-## Configuration
-
-The application is configured through environment variables:
-
-```bash
-# Server
-PORT=3000
-ENVIRONMENT=development
-
-# Database
-DATABASE_URL=postgres://user:pass@localhost:5432/launchpad
-
-# Security
-JWT_SECRET=your-secret-key
-JWT_EXPIRATION_HOURS=24
-
-# External Services
-GITHUB_CLIENT_ID=your-client-id
-GITHUB_CLIENT_SECRET=your-client-secret
-```
-
-See `.env.example` for all available options.
-
-## Database Schema
-
-The application uses PostgreSQL with Atlas for database migration management. The schema includes:
-
-- **chains**: Main chain entities
-- **chain_templates**: Pre-built templates
-- **users**: User accounts
-- **chain_repositories**: GitHub integrations
-- **chain_social_links**: Social media connections
-- **chain_assets**: Media and files
-- **virtual_pools**: Trading pools
-- **virtual_pool_transactions**: Trading history
+4. **Populate Database**
+   ```bash
+   make load-fixtures
+   ```
 
 ## Database Migrations
 
-This project uses [Atlas](https://atlasgo.io/) for managing database migrations in a professional, versioned manner.
+This project uses [Atlas](https://atlasgo.io/) for managing database migrations.
 
 ### Migration Commands
 
@@ -242,51 +155,6 @@ The fixture files are organized by entity type for easier maintenance. Load all 
 make load-fixtures
 ```
 
-## API Usage Examples
-
-### Create a Chain
-
-```bash
-curl -X POST http://localhost:3000/api/v1/chains \
-  -H "Content-Type: application/json" \
-  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
-  -d '{
-    "chain_name": "MyChain",
-    "token_symbol": "MYC",
-    "template_id": "template-uuid",
-    "chain_description": "My awesome blockchain"
-  }'
-```
-
-### Update Development Integration
-
-```bash
-curl -X PUT http://localhost:3000/api/v1/chains/{id}/development-integration \
-  -H "Content-Type: application/json" \
-  -H "X-User-ID: user-uuid" \
-  -d '{
-    "repository": {
-      "github_url": "https://github.com/owner/repo",
-      "repository_name": "repo",
-      "repository_owner": "owner"
-    }
-  }'
-```
-
-### Launch Chain
-
-```bash
-curl -X POST http://localhost:3000/api/v1/chains/{id}/launch \
-  -H "Content-Type: application/json" \
-  -H "X-User-ID: user-uuid" \
-  -d '{
-    "payment_confirmation": {
-      "transaction_hash": "0x1234...",
-      "amount_cnpy": 100.0
-    }
-  }'
-```
-
 ## Development
 
 ### Available Make Commands
@@ -359,36 +227,3 @@ Ensure these are set in production:
 ```
 HTTP Request → Middleware → Router → Handler → Service → Repository → Database
 ```
-
-### Key Components
-
-1. **Chi Router**: HTTP routing and middleware
-2. **PostgreSQL**: Primary database with sqlx
-3. **Validator**: Request validation with struct tags
-4. **CORS**: Cross-origin resource sharing
-5. **Graceful Shutdown**: Clean server termination
-
-### Security
-
-- JWT authentication (placeholder implementation)
-- Input validation on all endpoints
-- SQL injection prevention with parameterized queries
-- CORS configuration
-- Request timeouts
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Run `make fmt lint test`
-6. Submit a pull request
-
-## License
-
-[Add your license here]
-
-## Support
-
-For support, please open an issue in the GitHub repository.

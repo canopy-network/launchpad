@@ -59,6 +59,11 @@ docker-rebuild: ## Rebuild and restart services
 	docker-compose build --no-cache
 	docker-compose up -d
 
+docker-remove-postgres-all: ## Remove postgres container and volumes
+	docker compose stop postgres
+	docker compose rm postgres
+	docker volume rm -f launchpad_postgres_data
+
 # Database commands
 psql: ## Connect to PostgreSQL database via psql
 	PGPASSWORD=launchpad123 psql -h localhost -p 5432 -U launchpad -d launchpad
