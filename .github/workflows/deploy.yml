@@ -3,22 +3,53 @@ name: Deploy to Server
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+# Prevent concurrent deployments
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: production
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify secrets
+        run: |
+          if [ -z "${{ secrets.SSH_DEPLOY_HOST }}" ]; then
+            echo "Error: SSH_DEPLOY_HOST secret not set"
+            exit 1
+          fi
+
       - name: Deploy to server
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@v1.0.3
+        timeout-minutes: 10
         with:
           host: ${{ secrets.SSH_DEPLOY_HOST }}
           username: ${{ secrets.SSH_DEPLOY_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 10m
+          script_stop: true
           script: |
-            cd launchpad
-            git pull origin main
-            docker-compose stop app
-            docker system prune -a --volumes -f
-            docker-compose up --build app
+            set -e
+            cd /home/${{ secrets.SSH_DEPLOY_USERNAME }}/launchpad
+            bash scripts/github_deploy.sh
+
+      - name: Deployment notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment successful"
+          else
+            echo "❌ Deployment failed"
+            exit 1
+          fi
