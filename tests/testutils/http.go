@@ -11,7 +11,7 @@ import (
 
 const (
 	// DefaultBaseURL is the default base URL for the launchpad API
-	DefaultBaseURL = "http://localhost:3000"
+	DefaultBaseURL = "http://localhost:3001"
 
 	// TestUserID is a sample user ID from sample_data.sql (alice_dev)
 	TestUserID = "550e8400-e29b-41d4-a716-446655440000"

@@ -20,7 +20,7 @@ services:
     build: .
     container_name: launchpad-api
     environment:
-      PORT: 3000
+      PORT: 3001
       ENVIRONMENT: development
       DATABASE_URL: postgres://launchpad:launchpad123@postgres:5432/launchpad?sslmode=disable
       JWT_SECRET: your-super-secret-jwt-key-that-should-be-at-least-32-characters-long
@@ -32,7 +32,7 @@ services:
       DEFAULT_PAGE_SIZE: 20
       MAX_PAGE_SIZE: 100
     ports:
-      - "3001:3000"
+      - "3001:3001"
     depends_on:
       postgres:
         condition: service_healthy

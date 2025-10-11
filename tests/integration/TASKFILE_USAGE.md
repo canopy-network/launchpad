@@ -45,7 +45,7 @@ You don't need to remember to add the tag manually!
 ### ✅ Environment Variables
 
 Tasks automatically set:
-- `BASE_URL`: http://localhost:3000
+- `BASE_URL`: http://localhost:3001
 - `TEST_USER_ID`: 550e8400-e29b-41d4-a716-446655440000
 
 ## Examples
@@ -120,7 +120,7 @@ go-task chain TEST_FLAGS="-v -timeout=30s -tags=integration"
 
 ```bash
 # Test against different environment
-go-task chain BASE_URL=http://staging.example.com:3000
+go-task chain BASE_URL=http://staging.example.com:3001
 ```
 
 ## Comparison: Task vs Manual

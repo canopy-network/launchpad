@@ -128,9 +128,9 @@ setup: ## Set up development environment
 # API testing and chain management
 api-test: ## Test API endpoints (basic health and chains)
 	@echo "Testing health endpoint..."
-	@curl -s http://localhost:3000/health | jq .
+	@curl -s http://localhost:3001/health | jq .
 	@echo "\nTesting chains endpoint (requires auth header)..."
-	@curl -s -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" http://localhost:3000/api/v1/chains | jq .
+	@curl -s -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" http://localhost:3001/api/v1/chains | jq .
 
 test-api-full: ## Run comprehensive API test suite
 	@./scripts/test_api.sh

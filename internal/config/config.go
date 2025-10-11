@@ -39,7 +39,7 @@ type Config struct {
 
 func Load() (*Config, error) {
 	cfg := &Config{
-		Port:               getEnv("PORT", "3000"),
+		Port:               getEnv("PORT", "3001"),
 		Environment:        getEnv("ENVIRONMENT", "development"),
 		DatabaseURL:        getEnv("DATABASE_URL", ""),
 		JWTSecret:          getEnv("JWT_SECRET", ""),

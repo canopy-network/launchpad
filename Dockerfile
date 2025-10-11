@@ -31,7 +31,7 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3001
 
 # Command to run the application
 CMD ["./main"]
