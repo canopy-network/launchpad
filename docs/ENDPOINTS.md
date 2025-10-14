@@ -2,7 +2,7 @@
 
 Complete API reference for the Launchpad blockchain creation and management platform.
 
-**Base URL:** `http://localhost:8080`
+**Base URL:** `http://localhost:3001`
 **API Version:** `v1`
 **API Prefix:** `/api/v1`
 **JSON Schema:** All requests/responses are validated against JSON Schema 2020-12 (see `jsonschema.json`)
@@ -128,7 +128,7 @@ All list endpoints support pagination via query parameters:
 
 **Example Request:**
 ```bash
-curl -X GET http://localhost:8080/health
+curl -X GET http://localhost:3001/health
 ```
 
 **Notes:**
@@ -196,7 +196,7 @@ curl -X GET http://localhost:8080/health
 
 **Example Request:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/email \
+curl -X POST http://localhost:3001/api/v1/auth/email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com"
@@ -278,7 +278,7 @@ curl -X POST http://localhost:8080/api/v1/auth/email \
 
 **Example Request:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/verify \
+curl -X POST http://localhost:3001/api/v1/auth/verify \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -413,15 +413,15 @@ curl -X POST http://localhost:8080/api/v1/auth/verify \
 **Example Request:**
 ```bash
 # Get all templates with default pagination
-curl -X GET "http://localhost:8080/api/v1/templates" \
+curl -X GET "http://localhost:3001/api/v1/templates" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 
 # Filter by category with custom pagination
-curl -X GET "http://localhost:8080/api/v1/templates?category=defi&page=1&limit=10" \
+curl -X GET "http://localhost:3001/api/v1/templates?category=defi&page=1&limit=10" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 
 # Get only active templates
-curl -X GET "http://localhost:8080/api/v1/templates?is_active=true&page=1&limit=20" \
+curl -X GET "http://localhost:3001/api/v1/templates?is_active=true&page=1&limit=20" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -509,7 +509,7 @@ curl -X GET "http://localhost:8080/api/v1/templates?is_active=true&page=1&limit=
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:8080/api/v1/chains?status=draft&include=template&page=1&limit=20" \
+curl -X GET "http://localhost:3001/api/v1/chains?status=draft&include=template&page=1&limit=20" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -577,7 +577,7 @@ curl -X GET "http://localhost:8080/api/v1/chains?status=draft&include=template&p
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-446655440001?include=template" \
+curl -X GET "http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001?include=template" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -668,7 +668,7 @@ curl -X GET "http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-4466554
 
 **Example Request:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/chains \
+curl -X POST http://localhost:3001/api/v1/chains \
   -H "Content-Type: application/json" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
   -d '{
@@ -729,7 +729,7 @@ curl -X POST http://localhost:8080/api/v1/chains \
 
 **Example Request:**
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-446655440001 \
+curl -X DELETE http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001 \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -819,7 +819,7 @@ curl -X DELETE http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-44665
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:8080/api/v1/virtual-pools?page=1&limit=20" \
+curl -X GET "http://localhost:3001/api/v1/virtual-pools?page=1&limit=20" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -884,7 +884,7 @@ curl -X GET "http://localhost:8080/api/v1/virtual-pools?page=1&limit=20" \
 
 **Example Request:**
 ```bash
-curl -X GET http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/virtual-pool \
+curl -X GET http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/virtual-pool \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -948,7 +948,7 @@ curl -X GET http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-44665544
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:8080/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/transactions?transaction_type=buy&page=1&limit=20" \
+curl -X GET "http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/transactions?transaction_type=buy&page=1&limit=20" \
   -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
 ```
 
