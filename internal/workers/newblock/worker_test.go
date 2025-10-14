@@ -255,6 +255,32 @@ func (m *MockVirtualPoolRepository) GetPositionsByChainID(ctx context.Context, c
 	return args.Get(0).([]models.UserVirtualPosition), args.Int(1), args.Error(2)
 }
 
+func (m *MockVirtualPoolRepository) Create(ctx context.Context, pool *models.VirtualPool) (*models.VirtualPool, error) {
+	args := m.Called(ctx, pool)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.VirtualPool), args.Error(1)
+}
+
+func (m *MockVirtualPoolRepository) GetAllPools(ctx context.Context, pagination interfaces.Pagination) ([]models.VirtualPool, int, error) {
+	args := m.Called(ctx, pagination)
+	return args.Get(0).([]models.VirtualPool), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) GetTransactionsByChainID(ctx context.Context, chainID uuid.UUID, filters interfaces.TransactionFilters, pagination interfaces.Pagination) ([]models.VirtualPoolTransaction, int, error) {
+	args := m.Called(ctx, chainID, filters, pagination)
+	return args.Get(0).([]models.VirtualPoolTransaction), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]interfaces.UserPositionWithAddress, error) {
+	args := m.Called(ctx, chainID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]interfaces.UserPositionWithAddress), args.Error(1)
+}
+
 // MockUserRepository mocks the UserRepository interface
 type MockUserRepository struct {
 	mock.Mock

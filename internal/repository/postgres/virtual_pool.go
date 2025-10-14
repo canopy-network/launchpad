@@ -481,6 +481,24 @@ func (r *virtualPoolRepository) GetPositionsByChainID(ctx context.Context, chain
 	return positions, total, nil
 }
 
+// GetPositionsWithUsersByChainID retrieves all positions with user wallet addresses for a chain
+func (r *virtualPoolRepository) GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]interfaces.UserPositionWithAddress, error) {
+	query := `
+		SELECT u.wallet_address, uvp.token_balance
+		FROM user_virtual_positions uvp
+		INNER JOIN users u ON uvp.user_id = u.id
+		WHERE uvp.chain_id = $1 AND uvp.token_balance > 0
+		ORDER BY uvp.token_balance DESC`
+
+	var results []interfaces.UserPositionWithAddress
+	err := r.db.SelectContext(ctx, &results, query, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query positions with users: %w", err)
+	}
+
+	return results, nil
+}
+
 // Helper function to convert big.Float to float64 safely
 func bigFloatToFloat64(bf *big.Float) float64 {
 	if bf == nil {

@@ -26,6 +26,13 @@ type VirtualPoolRepository interface {
 	GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error)
 	UpsertUserPosition(ctx context.Context, position *models.UserVirtualPosition) error
 	GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination Pagination) ([]models.UserVirtualPosition, int, error)
+	GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]UserPositionWithAddress, error)
+}
+
+// UserPositionWithAddress contains position data with user's wallet address
+type UserPositionWithAddress struct {
+	WalletAddress string
+	TokenBalance  int64
 }
 
 // PoolStateUpdate represents the fields to update in a virtual pool

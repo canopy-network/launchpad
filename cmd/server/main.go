@@ -28,9 +28,10 @@ func main() {
 	userRepo := postgres.NewUserRepository(db)
 	templateRepo := postgres.NewChainTemplateRepository(db)
 	chainRepo := postgres.NewChainRepository(db, userRepo, templateRepo)
+	virtualPoolRepo := postgres.NewVirtualPoolRepository(db)
 
 	// Initialize services
-	chainService := services.NewChainService(chainRepo, templateRepo, userRepo)
+	chainService := services.NewChainService(chainRepo, templateRepo, userRepo, virtualPoolRepo)
 
 	// Create services container
 	services := &server.Services{
