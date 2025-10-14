@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: launchpad
+  labels:
+    app: launchpad
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: launchpad.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: launchpad
+            port:
+              number: 80
+  # Uncomment for TLS/SSL
+  # tls:
+  # - hosts:
+  #   - launchpad.local
+  #   secretName: launchpad-tls

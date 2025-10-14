@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: launchpad
+
+commonLabels:
+  app: launchpad
+  managed-by: kustomize
+  version: v1.0.0
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - configmap.yaml
+  - ingress.yaml
+
+images:
+  - name: docker.io/launchpad
+    newTag: latest
+
+# Common annotations for all resources
+commonAnnotations:
+  app.kubernetes.io/name: launchpad
+  app.kubernetes.io/component: api

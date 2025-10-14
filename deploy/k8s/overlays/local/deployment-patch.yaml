@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: launchpad
+spec:
+  template:
+    spec:
+      containers:
+      - name: launchpad
+        # Use local image for development
+        imagePullPolicy: Never
+        # Reduced resources for local development
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        # Development environment variables
+        env:
+        - name: ENVIRONMENT
+          value: "development"
+        - name: LOG_LEVEL
+          value: "debug"
+        # More lenient health checks for development
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
