@@ -76,6 +76,7 @@ CREATE TABLE chains (
 
     -- Basic chain identification
     chain_name VARCHAR(100) NOT NULL UNIQUE,
+    token_name VARCHAR(100),
     token_symbol VARCHAR(20) NOT NULL,
     chain_description TEXT,
 
@@ -85,6 +86,9 @@ CREATE TABLE chains (
 
     -- Economic parameters
     token_total_supply BIGINT NOT NULL DEFAULT 1000000000,
+    block_time_seconds INTEGER, -- Block time in seconds: 5, 10, 20, 30, 60, 120, 300, 600, 1800
+    upgrade_block_height BIGINT, -- Block height for upgrades
+    block_reward_amount DECIMAL(15,8), -- Block reward amount
     graduation_threshold DECIMAL(15,2) NOT NULL DEFAULT 50000.00, -- Amount in CNPY required for graduation
     creation_fee_cnpy DECIMAL(15,8) NOT NULL DEFAULT 100.00000000,
 

@@ -10,11 +10,15 @@ import (
 type Chain struct {
 	ID                         uuid.UUID  `json:"id" db:"id"`
 	ChainName                  string     `json:"chain_name" db:"chain_name"`
+	TokenName                  *string    `json:"token_name" db:"token_name"`
 	TokenSymbol                string     `json:"token_symbol" db:"token_symbol"`
 	ChainDescription           *string    `json:"chain_description" db:"chain_description"`
 	TemplateID                 *uuid.UUID `json:"template_id" db:"template_id"`
 	ConsensusMechanism         string     `json:"consensus_mechanism" db:"consensus_mechanism"`
 	TokenTotalSupply           int64      `json:"token_total_supply" db:"token_total_supply"`
+	BlockTimeSeconds           *int       `json:"block_time_seconds" db:"block_time_seconds"`
+	UpgradeBlockHeight         *int64     `json:"upgrade_block_height" db:"upgrade_block_height"`
+	BlockRewardAmount          *float64   `json:"block_reward_amount" db:"block_reward_amount"`
 	GraduationThreshold        float64    `json:"graduation_threshold" db:"graduation_threshold"` // Amount in CNPY required for graduation
 	CreationFeeCNPY            float64    `json:"creation_fee_cnpy" db:"creation_fee_cnpy"`
 	InitialCNPYReserve         float64    `json:"initial_cnpy_reserve" db:"initial_cnpy_reserve"`

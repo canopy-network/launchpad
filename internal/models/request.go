@@ -2,19 +2,43 @@ package models
 
 // CreateChainRequest represents the request payload for creating a new chain
 type CreateChainRequest struct {
-	ChainName                  string   `json:"chain_name" validate:"required,min=1,max=100"`
-	TokenSymbol                string   `json:"token_symbol" validate:"required,min=1,max=20,uppercase"`
-	ChainDescription           *string  `json:"chain_description" validate:"omitempty,max=5000"`
-	TemplateID                 *string  `json:"template_id" validate:"omitempty,uuid"`
-	ConsensusMechanism         string   `json:"consensus_mechanism" validate:"omitempty,max=50"`
-	TokenTotalSupply           *int64   `json:"token_total_supply" validate:"omitempty,min=1000000,max=1000000000000"`
-	GraduationThreshold        *float64 `json:"graduation_threshold" validate:"omitempty,min=1000,max=10000000"` // Amount in CNPY required for graduation
-	CreationFeeCNPY            *float64 `json:"creation_fee_cnpy" validate:"omitempty,min=0"`
+	// Basic chain information
+	ChainName        string  `json:"chain_name" validate:"required,min=1,max=100"`
+	TokenName        *string `json:"token_name" validate:"omitempty,min=1,max=100"`
+	TokenSymbol      string  `json:"token_symbol" validate:"required,min=1,max=20,uppercase"`
+	ChainDescription *string `json:"chain_description" validate:"omitempty,max=5000"`
+
+	// Template and configuration
+	TemplateID         *string `json:"template_id" validate:"omitempty,uuid"`
+	ConsensusMechanism string  `json:"consensus_mechanism" validate:"omitempty,max=50"`
+
+	// Economic parameters
+	TokenTotalSupply    *int64   `json:"token_total_supply" validate:"omitempty,min=1000000,max=1000000000000"`
+	BlockTimeSeconds    *int     `json:"block_time_seconds" validate:"omitempty,oneof=5 10 20 30 60 120 300 600 1800"`
+	UpgradeBlockHeight  *int64   `json:"upgrade_block_height" validate:"omitempty,min=1"`
+	BlockRewardAmount   *float64 `json:"block_reward_amount" validate:"omitempty,min=0"`
+	GraduationThreshold *float64 `json:"graduation_threshold" validate:"omitempty,min=1000,max=10000000"`
+	CreationFeeCNPY     *float64 `json:"creation_fee_cnpy" validate:"omitempty,min=0"`
+
+	// Bonding curve parameters
 	InitialCNPYReserve         *float64 `json:"initial_cnpy_reserve" validate:"omitempty,min=1000"`
 	InitialTokenSupply         *int64   `json:"initial_token_supply" validate:"omitempty,min=100000"`
 	BondingCurveSlope          *float64 `json:"bonding_curve_slope" validate:"omitempty,min=0.000000001"`
 	ValidatorMinStake          *float64 `json:"validator_min_stake" validate:"omitempty,min=100"`
 	CreatorInitialPurchaseCNPY *float64 `json:"creator_initial_purchase_cnpy" validate:"omitempty,min=0"`
+
+	// GitHub repository
+	GithubURL *string `json:"github_url" validate:"omitempty,url"`
+
+	// Social links
+	TwitterURL  *string `json:"twitter_url" validate:"omitempty,url"`
+	TelegramURL *string `json:"telegram_url" validate:"omitempty,url"`
+	WebsiteURL  *string `json:"website_url" validate:"omitempty,url"`
+
+	// Assets
+	WhitepaperURL  *string `json:"whitepaper_url" validate:"omitempty,url"`
+	TokenImageURL  *string `json:"token_image_url" validate:"omitempty,url"`
+	TokenVideoURL  *string `json:"token_video_url" validate:"omitempty,url"`
 }
 
 // Query parameter structures

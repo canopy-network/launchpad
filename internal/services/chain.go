@@ -80,11 +80,15 @@ func (s *ChainService) CreateChain(ctx context.Context, req *models.CreateChainR
 
 	chain := &models.Chain{
 		ChainName:                  req.ChainName,
+		TokenName:                  req.TokenName,
 		TokenSymbol:                strings.ToUpper(req.TokenSymbol),
 		ChainDescription:           req.ChainDescription,
 		TemplateID:                 templateID,
 		ConsensusMechanism:         s.getStringValueOrDefault(&req.ConsensusMechanism, defaultConsensus),
 		TokenTotalSupply:           s.getInt64ValueOrDefault(req.TokenTotalSupply, defaultTokenSupply),
+		BlockTimeSeconds:           req.BlockTimeSeconds,
+		UpgradeBlockHeight:         req.UpgradeBlockHeight,
+		BlockRewardAmount:          req.BlockRewardAmount,
 		GraduationThreshold:        s.getFloat64ValueOrDefault(req.GraduationThreshold, 50000.00),
 		CreationFeeCNPY:            s.getFloat64ValueOrDefault(req.CreationFeeCNPY, 100.00000000),
 		InitialCNPYReserve:         s.getFloat64ValueOrDefault(req.InitialCNPYReserve, 10000.00000000),
@@ -151,6 +155,131 @@ func (s *ChainService) CreateChain(ctx context.Context, req *models.CreateChainR
 		// Rollback chain creation on key storage failure
 		_ = s.chainRepo.Delete(ctx, createdChain.ID)
 		return nil, fmt.Errorf("failed to store chain key: %w", err)
+	}
+
+	// Create GitHub repository if provided
+	if req.GithubURL != nil && *req.GithubURL != "" {
+		repo := &models.ChainRepository{
+			ChainID:            createdChain.ID,
+			GithubURL:          *req.GithubURL,
+			RepositoryName:     extractRepoName(*req.GithubURL),
+			RepositoryOwner:    extractRepoOwner(*req.GithubURL),
+			DefaultBranch:      "main",
+			IsConnected:        false,
+			AutoUpgradeEnabled: true,
+			UpgradeTrigger:     models.UpgradeTriggerTagRelease,
+			BuildStatus:        models.BuildStatusPending,
+		}
+		_, err = s.chainRepo.CreateRepository(ctx, repo)
+		if err != nil {
+			// Log error but don't fail the chain creation
+			fmt.Printf("Failed to create chain repository: %v\n", err)
+		}
+	}
+
+	// Create social links if provided
+	socialLinks := []models.ChainSocialLink{}
+	displayOrder := 0
+
+	if req.TwitterURL != nil && *req.TwitterURL != "" {
+		socialLinks = append(socialLinks, models.ChainSocialLink{
+			ChainID:      createdChain.ID,
+			Platform:     models.PlatformTwitter,
+			URL:          *req.TwitterURL,
+			DisplayOrder: displayOrder,
+			IsActive:     true,
+		})
+		displayOrder++
+	}
+
+	if req.TelegramURL != nil && *req.TelegramURL != "" {
+		socialLinks = append(socialLinks, models.ChainSocialLink{
+			ChainID:      createdChain.ID,
+			Platform:     models.PlatformTelegram,
+			URL:          *req.TelegramURL,
+			DisplayOrder: displayOrder,
+			IsActive:     true,
+		})
+		displayOrder++
+	}
+
+	if req.WebsiteURL != nil && *req.WebsiteURL != "" {
+		socialLinks = append(socialLinks, models.ChainSocialLink{
+			ChainID:      createdChain.ID,
+			Platform:     models.PlatformWebsite,
+			URL:          *req.WebsiteURL,
+			DisplayOrder: displayOrder,
+			IsActive:     true,
+		})
+		displayOrder++
+	}
+
+	if len(socialLinks) > 0 {
+		err = s.chainRepo.CreateSocialLinks(ctx, createdChain.ID, socialLinks)
+		if err != nil {
+			// Log error but don't fail the chain creation
+			fmt.Printf("Failed to create social links: %v\n", err)
+		}
+	}
+
+	// Create assets if provided
+	assets := []models.ChainAsset{}
+	assetDisplayOrder := 0
+
+	if req.WhitepaperURL != nil && *req.WhitepaperURL != "" {
+		assets = append(assets, models.ChainAsset{
+			ChainID:          createdChain.ID,
+			AssetType:        models.AssetTypeWhitepaper,
+			FileName:         "whitepaper.pdf",
+			FileURL:          *req.WhitepaperURL,
+			DisplayOrder:     assetDisplayOrder,
+			IsPrimary:        false,
+			IsFeatured:       false,
+			IsActive:         true,
+			ModerationStatus: "pending",
+			UploadedBy:       createdBy,
+		})
+		assetDisplayOrder++
+	}
+
+	if req.TokenImageURL != nil && *req.TokenImageURL != "" {
+		assets = append(assets, models.ChainAsset{
+			ChainID:          createdChain.ID,
+			AssetType:        models.AssetTypeLogo,
+			FileName:         "logo",
+			FileURL:          *req.TokenImageURL,
+			DisplayOrder:     assetDisplayOrder,
+			IsPrimary:        true,
+			IsFeatured:       true,
+			IsActive:         true,
+			ModerationStatus: "pending",
+			UploadedBy:       createdBy,
+		})
+		assetDisplayOrder++
+	}
+
+	if req.TokenVideoURL != nil && *req.TokenVideoURL != "" {
+		assets = append(assets, models.ChainAsset{
+			ChainID:          createdChain.ID,
+			AssetType:        models.AssetTypeVideo,
+			FileName:         "promo_video",
+			FileURL:          *req.TokenVideoURL,
+			DisplayOrder:     assetDisplayOrder,
+			IsPrimary:        false,
+			IsFeatured:       true,
+			IsActive:         true,
+			ModerationStatus: "pending",
+			UploadedBy:       createdBy,
+		})
+		assetDisplayOrder++
+	}
+
+	if len(assets) > 0 {
+		err = s.chainRepo.CreateAssets(ctx, createdChain.ID, assets)
+		if err != nil {
+			// Log error but don't fail the chain creation
+			fmt.Printf("Failed to create assets: %v\n", err)
+		}
 	}
 
 	// Update user's chain count (if user repository is available)
@@ -408,4 +537,24 @@ func (s *ChainService) getIntValueOrDefault(ptr *int, defaultValue int) int {
 		return *ptr
 	}
 	return defaultValue
+}
+
+// extractRepoName extracts repository name from GitHub URL
+// Example: https://github.com/owner/repo -> "repo"
+func extractRepoName(githubURL string) string {
+	parts := strings.Split(strings.TrimSuffix(githubURL, "/"), "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return ""
+}
+
+// extractRepoOwner extracts repository owner from GitHub URL
+// Example: https://github.com/owner/repo -> "owner"
+func extractRepoOwner(githubURL string) string {
+	parts := strings.Split(strings.TrimSuffix(githubURL, "/"), "/")
+	if len(parts) >= 2 {
+		return parts[len(parts)-2]
+	}
+	return ""
 }
