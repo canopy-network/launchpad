@@ -402,7 +402,7 @@ func (m *MockUserRepository) UpdateLastActive(ctx context.Context, userID uuid.U
 
 // setupStandardUserMocks sets up the standard user repository mocks for transaction processing
 func setupStandardUserMocks(userRepo *MockUserRepository, poolRepo *MockVirtualPoolRepository, senderAddress []byte, chainID uuid.UUID) {
-	senderAddressHex := hex.EncodeToString(senderAddress)
+	senderAddressHex := "0x" + hex.EncodeToString(senderAddress) // Include 0x prefix to match worker.go line 267
 	testUser := &models.User{
 		ID:            uuid.New(),
 		WalletAddress: senderAddressHex,

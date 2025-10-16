@@ -86,6 +86,79 @@ tasks:
     cmds:
       - go test {{.TEST_FLAGS}} -run "TestUserFixture|TestMultipleUsers" .
 
+  # Wallet tests
+  wallet:create:
+    desc: Run wallet creation test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestCreateWallet .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:decrypt:
+    desc: Run wallet decryption test (correct/wrong password)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestDecryptWallet .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:ratelimit:
+    desc: Run wallet rate limiting test (5 failed attempts)
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestWalletRateLimiting .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:list:
+    desc: Run wallet listing and filtering test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestGetWallets .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:get:
+    desc: Run get single wallet test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestGetWallet .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:update:
+    desc: Run wallet update test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestUpdateWallet .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:delete:
+    desc: Run wallet deletion test
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestDeleteWallet .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:validation:
+    desc: Run wallet validation tests
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestCreateWalletValidation .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
+  wallet:all:
+    desc: Run all wallet integration tests
+    cmds:
+      - go test {{.TEST_FLAGS}} -run TestWallet .
+    env:
+      BASE_URL: "{{.BASE_URL}}"
+      TEST_USER_ID: "{{.TEST_USER_ID}}"
+
   # Worker tests
   worker:newblock:
     desc: Run new block worker integration tests

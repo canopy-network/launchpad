@@ -81,3 +81,35 @@ type VerifyEmailCodeRequest struct {
 	Email string `json:"email" validate:"required,email"`
 	Code  string `json:"code" validate:"required,len=6,numeric"`
 }
+
+// CreateWalletRequest represents the request payload for creating a new wallet
+type CreateWalletRequest struct {
+	Password          string  `json:"password" validate:"required,min=8"`
+	UserID            *string `json:"user_id" validate:"omitempty,uuid"`
+	ChainID           *string `json:"chain_id" validate:"omitempty,uuid"`
+	WalletName        *string `json:"wallet_name" validate:"omitempty,min=1,max=100"`
+	WalletDescription *string `json:"wallet_description" validate:"omitempty,max=500"`
+}
+
+// DecryptWalletRequest represents the request payload for decrypting a wallet
+type DecryptWalletRequest struct {
+	Password string `json:"password" validate:"required"`
+}
+
+// UpdateWalletRequest represents the request payload for updating wallet metadata
+type UpdateWalletRequest struct {
+	WalletName        *string `json:"wallet_name" validate:"omitempty,min=1,max=100"`
+	WalletDescription *string `json:"wallet_description" validate:"omitempty,max=500"`
+	IsActive          *bool   `json:"is_active"`
+}
+
+// WalletsQueryParams represents query parameters for listing wallets
+type WalletsQueryParams struct {
+	UserID    string `form:"user_id" validate:"omitempty,uuid"`
+	ChainID   string `form:"chain_id" validate:"omitempty,uuid"`
+	IsActive  *bool  `form:"is_active"`
+	IsLocked  *bool  `form:"is_locked"`
+	CreatedBy string `form:"created_by" validate:"omitempty,uuid"`
+	Page      int    `form:"page" validate:"omitempty,min=1"`
+	Limit     int    `form:"limit" validate:"omitempty,min=1,max=100"`
+}

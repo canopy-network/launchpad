@@ -418,3 +418,55 @@ CREATE INDEX idx_chain_keys_chain ON chain_keys (chain_id);
 CREATE INDEX idx_chain_keys_address ON chain_keys (address);
 CREATE INDEX idx_chain_keys_active ON chain_keys (is_active);
 CREATE INDEX idx_chain_keys_purpose ON chain_keys (key_purpose);
+
+-- General-purpose wallet keypairs for various purposes (users, chains, treasury, etc.)
+-- Stores encrypted BLS12-381 keypairs using Argon2 + AES-GCM encryption
+-- This table stores flexible-purpose wallets, while chain_keys is for chain-specific operational keys
+-- Uses application-level encryption compatible with pkg/keygen/keygen.go
+CREATE TABLE wallets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Optional associations (can be NULL for standalone wallets)
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    chain_id UUID REFERENCES chains(id) ON DELETE CASCADE,
+
+    -- Cryptographic key data (matches keygen.EncryptedKeyPair structure)
+    address TEXT NOT NULL UNIQUE, -- Blockchain address as hex string
+    public_key TEXT NOT NULL, -- Hex-encoded public key
+    encrypted_private_key TEXT NOT NULL, -- Hex-encoded AES-GCM encrypted private key
+    salt BYTEA NOT NULL CHECK (octet_length(salt) = 16), -- 16-byte salt for Argon2 key derivation
+
+    -- Wallet metadata
+    wallet_name VARCHAR(100), -- Optional friendly name
+    wallet_description TEXT,
+
+    -- Security and lifecycle
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    is_locked BOOLEAN NOT NULL DEFAULT FALSE, -- Can be locked for security
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    password_changed_at TIMESTAMP WITH TIME ZONE,
+    failed_decrypt_attempts INTEGER NOT NULL DEFAULT 0, -- Track brute force attempts
+    locked_until TIMESTAMP WITH TIME ZONE, -- Temporary lock after failed attempts
+
+    -- Audit trail
+    created_by UUID REFERENCES users(id), -- Who created this wallet (can be NULL for system wallets)
+
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    -- Must be associated with at least one entity
+    CHECK (user_id IS NOT NULL OR chain_id IS NOT NULL OR created_by IS NOT NULL)
+);
+
+-- Indexes for wallets table
+CREATE INDEX idx_wallets_user ON wallets (user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX idx_wallets_chain ON wallets (chain_id) WHERE chain_id IS NOT NULL;
+CREATE INDEX idx_wallets_address ON wallets (address);
+CREATE INDEX idx_wallets_active ON wallets (is_active);
+CREATE INDEX idx_wallets_created_by ON wallets (created_by) WHERE created_by IS NOT NULL;
+
+-- Trigger for wallets updated_at
+CREATE TRIGGER update_wallets_updated_at
+    BEFORE UPDATE ON wallets
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();

@@ -34,11 +34,13 @@ func main() {
 	templateRepo := postgres.NewChainTemplateRepository(db)
 	chainRepo := postgres.NewChainRepository(db, userRepo, templateRepo)
 	virtualPoolRepo := postgres.NewVirtualPoolRepository(db)
+	walletRepo := postgres.NewWalletRepository(db)
 
 	// Initialize services
 	chainService := services.NewChainService(chainRepo, templateRepo, userRepo, virtualPoolRepo)
 	templateService := services.NewTemplateService(templateRepo)
 	virtualPoolService := services.NewVirtualPoolService(virtualPoolRepo)
+	walletService := services.NewWalletService(walletRepo)
 
 	// Initialize email service (always use SMTP)
 	emailService := services.NewSMTPEmailService()
@@ -52,6 +54,7 @@ func main() {
 		TemplateService:    templateService,
 		AuthService:        authService,
 		VirtualPoolService: virtualPoolService,
+		WalletService:      walletService,
 	}
 
 	// Initialize and start root chain event worker

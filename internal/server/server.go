@@ -32,6 +32,7 @@ type Services struct {
 	TemplateService    *services.TemplateService
 	AuthService        *services.AuthService
 	VirtualPoolService *services.VirtualPoolService
+	WalletService      *services.WalletService
 }
 
 type Handlers struct {
@@ -39,6 +40,7 @@ type Handlers struct {
 	TemplateHandler    *handlers.TemplateHandler
 	AuthHandler        *handlers.AuthHandler
 	VirtualPoolHandler *handlers.VirtualPoolHandler
+	WalletHandler      *handlers.WalletHandler
 }
 
 func NewServer(cfg *config.Config, services *Services) *Server {
@@ -51,6 +53,7 @@ func NewServer(cfg *config.Config, services *Services) *Server {
 		TemplateHandler:    handlers.NewTemplateHandler(services.TemplateService, validator),
 		AuthHandler:        handlers.NewAuthHandler(services.AuthService, validator),
 		VirtualPoolHandler: handlers.NewVirtualPoolHandler(services.VirtualPoolService, validator),
+		WalletHandler:      handlers.NewWalletHandler(services.WalletService, validator),
 	}
 
 	s := &Server{
@@ -137,6 +140,22 @@ func (s *Server) setupRoutes() {
 					// Virtual pool endpoints
 					r.Get("/virtual-pool", s.Handlers.ChainHandler.GetVirtualPool)
 					r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
+				})
+			})
+
+			// Wallet routes
+			r.Route("/wallets", func(r chi.Router) {
+				r.Get("/", s.Handlers.WalletHandler.GetWallets)
+				r.Post("/", s.Handlers.WalletHandler.CreateWallet)
+
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", s.Handlers.WalletHandler.GetWallet)
+					r.Put("/", s.Handlers.WalletHandler.UpdateWallet)
+					r.Delete("/", s.Handlers.WalletHandler.DeleteWallet)
+
+					// Wallet operations
+					r.Post("/decrypt", s.Handlers.WalletHandler.DecryptWallet)
+					r.Post("/unlock", s.Handlers.WalletHandler.UnlockWallet)
 				})
 			})
 		})
