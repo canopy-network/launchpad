@@ -46,6 +46,9 @@ func (s *AuthService) SendEmailCode(ctx context.Context, email string) (string, 
 		expiresAt: time.Now().Add(10 * time.Minute),
 	})
 
+	// TODO remove later, disable emails for the time being
+	return code, nil
+
 	// Send email
 	if err := s.emailService.SendAuthCode(ctx, email, code); err != nil {
 		return "", fmt.Errorf("failed to send email: %w", err)

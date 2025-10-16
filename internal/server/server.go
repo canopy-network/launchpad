@@ -56,12 +56,20 @@ func NewServer(cfg *config.Config, services *Services) *Server {
 		WalletHandler:      handlers.NewWalletHandler(services.WalletService, validator),
 	}
 
+	// Configure rate limiting based on environment
+	// In production: 10 seconds between email requests
+	// In development/test: effectively disabled (1us)
+	rateLimitInterval := 1 * time.Microsecond
+	if cfg.IsProduction() {
+		rateLimitInterval = 10 * time.Second
+	}
+
 	s := &Server{
 		Router:           chi.NewRouter(),
 		Config:           cfg,
 		Services:         services,
 		Handlers:         handlers,
-		EmailRateLimiter: custommiddleware.NewRateLimiter(1 * time.Minute),
+		EmailRateLimiter: custommiddleware.NewRateLimiter(rateLimitInterval),
 	}
 
 	s.setupMiddleware()
@@ -111,7 +119,8 @@ func (s *Server) setupRoutes() {
 		// Public routes (no authentication required)
 		r.Group(func(r chi.Router) {
 			// Auth endpoints with rate limiting
-			// Email sending is rate limited to 1 request per minute per IP
+			// Email sending is rate limited in production (10 seconds per IP)
+			// Rate limiting is disabled in development/test environments
 			r.With(custommiddleware.RateLimitMiddleware(s.EmailRateLimiter)).Post("/auth/email", s.Handlers.AuthHandler.SendEmailCode)
 			r.Post("/auth/verify", s.Handlers.AuthHandler.VerifyEmailCode)
 		})
