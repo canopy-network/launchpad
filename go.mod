@@ -7,7 +7,7 @@ toolchain go1.24.6
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/a-h/templ v0.3.943
-	github.com/canopy-network/canopy v0.0.0-20250915164606-1c4c236aba15
+	github.com/canopy-network/canopy v0.0.0-20251015175553-bdf7cb3f5216
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -95,5 +95,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
-
-replace github.com/canopy-network/canopy => ../canopy
