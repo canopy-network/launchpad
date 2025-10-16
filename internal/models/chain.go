@@ -19,7 +19,7 @@ type Chain struct {
 	BlockTimeSeconds           *int       `json:"block_time_seconds" db:"block_time_seconds"`
 	UpgradeBlockHeight         *int64     `json:"upgrade_block_height" db:"upgrade_block_height"`
 	BlockRewardAmount          *float64   `json:"block_reward_amount" db:"block_reward_amount"`
-	GraduationThreshold        float64    `json:"graduation_threshold" db:"graduation_threshold"` // Amount in CNPY required for graduation
+	GraduationThreshold        float64    `json:"graduation_threshold" db:"graduation_threshold"`
 	CreationFeeCNPY            float64    `json:"creation_fee_cnpy" db:"creation_fee_cnpy"`
 	InitialCNPYReserve         float64    `json:"initial_cnpy_reserve" db:"initial_cnpy_reserve"`
 	InitialTokenSupply         int64      `json:"initial_token_supply" db:"initial_token_supply"`

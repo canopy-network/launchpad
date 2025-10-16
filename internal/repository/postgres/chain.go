@@ -91,10 +91,10 @@ func (r *chainRepository) GetByName(ctx context.Context, name string) (*models.C
 // GetByAddress retrieves a chain by its key address
 func (r *chainRepository) GetByAddress(ctx context.Context, address string) (*models.Chain, error) {
 	query := `
-		SELECT c.id, c.chain_name, c.token_symbol, c.chain_description, c.template_id,
-			c.consensus_mechanism, c.token_total_supply, c.graduation_threshold,
-			c.creation_fee_cnpy, c.initial_cnpy_reserve, c.initial_token_supply,
-			c.bonding_curve_slope, c.scheduled_launch_time, c.actual_launch_time,
+		SELECT c.id, c.chain_name, c.token_name, c.token_symbol, c.chain_description, c.template_id,
+			c.consensus_mechanism, c.token_total_supply, c.block_time_seconds, c.upgrade_block_height,
+			c.block_reward_amount, c.graduation_threshold, c.creation_fee_cnpy, c.initial_cnpy_reserve,
+			c.initial_token_supply, c.bonding_curve_slope, c.scheduled_launch_time, c.actual_launch_time,
 			c.creator_initial_purchase_cnpy, c.status, c.is_graduated, c.graduation_time,
 			c.chain_id, c.genesis_hash, c.validator_min_stake, c.created_by,
 			c.created_at, c.updated_at
@@ -194,9 +194,16 @@ func (r *chainRepository) List(ctx context.Context, filters interfaces.ChainFilt
 		return nil, 0, fmt.Errorf("failed to count chains: %w", err)
 	}
 
-	// Data query
+	// Data query - explicitly list columns to ensure correct scan order
 	dataQuery := fmt.Sprintf(`
-		SELECT c.*, ct.template_name, ct.template_description, u.wallet_address, u.display_name
+		SELECT c.id, c.chain_name, c.token_name, c.token_symbol, c.chain_description,
+			c.template_id, c.consensus_mechanism, c.token_total_supply, c.block_time_seconds,
+			c.upgrade_block_height, c.block_reward_amount, c.graduation_threshold, c.creation_fee_cnpy,
+			c.initial_cnpy_reserve, c.initial_token_supply, c.bonding_curve_slope,
+			c.scheduled_launch_time, c.actual_launch_time, c.creator_initial_purchase_cnpy,
+			c.status, c.is_graduated, c.graduation_time, c.chain_id, c.genesis_hash,
+			c.validator_min_stake, c.created_by, c.created_at, c.updated_at,
+			ct.template_name, ct.template_description, u.wallet_address, u.display_name
 		FROM chains c
 		LEFT JOIN chain_templates ct ON c.template_id = ct.id
 		LEFT JOIN users u ON c.created_by = u.id
@@ -221,14 +228,18 @@ func (r *chainRepository) List(ctx context.Context, filters interfaces.ChainFilt
 		var chain models.Chain
 		var template models.ChainTemplate
 		var user models.User
-		var chainDescription, chainID, genesisHash sql.NullString
+		var chainDescription, chainID, genesisHash, tokenName sql.NullString
 		var templateID sql.NullString
 		var scheduledLaunchTime, actualLaunchTime, graduationTime sql.NullTime
+		var blockTimeSeconds sql.NullInt32
+		var upgradeBlockHeight sql.NullInt64
+		var blockRewardAmount sql.NullFloat64
 		var templateName, templateDescription, walletAddress, displayName sql.NullString
 
 		err := rows.Scan(
-			&chain.ID, &chain.ChainName, &chain.TokenSymbol, &chainDescription,
+			&chain.ID, &chain.ChainName, &tokenName, &chain.TokenSymbol, &chainDescription,
 			&templateID, &chain.ConsensusMechanism, &chain.TokenTotalSupply,
+			&blockTimeSeconds, &upgradeBlockHeight, &blockRewardAmount,
 			&chain.GraduationThreshold, &chain.CreationFeeCNPY, &chain.InitialCNPYReserve,
 			&chain.InitialTokenSupply, &chain.BondingCurveSlope, &scheduledLaunchTime,
 			&actualLaunchTime, &chain.CreatorInitialPurchaseCNPY, &chain.Status,
@@ -242,8 +253,19 @@ func (r *chainRepository) List(ctx context.Context, filters interfaces.ChainFilt
 		}
 
 		// Handle nullable fields
+		chain.TokenName = database.StringPtr(tokenName)
 		chain.ChainDescription = database.StringPtr(chainDescription)
 		chain.TemplateID = database.UUIDPtr(templateID)
+		if blockTimeSeconds.Valid {
+			val := int(blockTimeSeconds.Int32)
+			chain.BlockTimeSeconds = &val
+		}
+		if upgradeBlockHeight.Valid {
+			chain.UpgradeBlockHeight = &upgradeBlockHeight.Int64
+		}
+		if blockRewardAmount.Valid {
+			chain.BlockRewardAmount = &blockRewardAmount.Float64
+		}
 		if scheduledLaunchTime.Valid {
 			chain.ScheduledLaunchTime = &scheduledLaunchTime.Time
 		}
@@ -300,22 +322,27 @@ func (r *chainRepository) ListByStatus(ctx context.Context, status string, pagin
 // Helper methods
 func (r *chainRepository) getChainByField(ctx context.Context, field, value string) (*models.Chain, error) {
 	query := fmt.Sprintf(`
-		SELECT id, chain_name, token_symbol, chain_description, template_id, consensus_mechanism,
-			   token_total_supply, graduation_threshold, creation_fee_cnpy, initial_cnpy_reserve,
+		SELECT id, chain_name, token_name, token_symbol, chain_description, template_id, consensus_mechanism,
+			   token_total_supply, block_time_seconds, upgrade_block_height, block_reward_amount,
+			   graduation_threshold, creation_fee_cnpy, initial_cnpy_reserve,
 			   initial_token_supply, bonding_curve_slope, scheduled_launch_time, actual_launch_time,
 			   creator_initial_purchase_cnpy, status, is_graduated, graduation_time, chain_id,
 			   genesis_hash, validator_min_stake, created_by, created_at, updated_at
 		FROM chains WHERE %s = $1`, field)
 
 	var chain models.Chain
-	var chainDescription sql.NullString
+	var chainDescription, tokenName sql.NullString
 	var templateID sql.NullString
 	var scheduledLaunchTime, actualLaunchTime, graduationTime sql.NullTime
+	var blockTimeSeconds sql.NullInt32
+	var upgradeBlockHeight sql.NullInt64
+	var blockRewardAmount sql.NullFloat64
 	var chainID, genesisHash sql.NullString
 
 	err := r.db.QueryRowxContext(ctx, query, value).Scan(
-		&chain.ID, &chain.ChainName, &chain.TokenSymbol, &chainDescription,
+		&chain.ID, &chain.ChainName, &tokenName, &chain.TokenSymbol, &chainDescription,
 		&templateID, &chain.ConsensusMechanism, &chain.TokenTotalSupply,
+		&blockTimeSeconds, &upgradeBlockHeight, &blockRewardAmount,
 		&chain.GraduationThreshold, &chain.CreationFeeCNPY, &chain.InitialCNPYReserve,
 		&chain.InitialTokenSupply, &chain.BondingCurveSlope, &scheduledLaunchTime,
 		&actualLaunchTime, &chain.CreatorInitialPurchaseCNPY, &chain.Status,
@@ -331,8 +358,19 @@ func (r *chainRepository) getChainByField(ctx context.Context, field, value stri
 	}
 
 	// Handle nullable fields
+	chain.TokenName = database.StringPtr(tokenName)
 	chain.ChainDescription = database.StringPtr(chainDescription)
 	chain.TemplateID = database.UUIDPtr(templateID)
+	if blockTimeSeconds.Valid {
+		val := int(blockTimeSeconds.Int32)
+		chain.BlockTimeSeconds = &val
+	}
+	if upgradeBlockHeight.Valid {
+		chain.UpgradeBlockHeight = &upgradeBlockHeight.Int64
+	}
+	if blockRewardAmount.Valid {
+		chain.BlockRewardAmount = &blockRewardAmount.Float64
+	}
 	if scheduledLaunchTime.Valid {
 		chain.ScheduledLaunchTime = &scheduledLaunchTime.Time
 	}
