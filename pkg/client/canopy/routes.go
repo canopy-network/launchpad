@@ -39,6 +39,9 @@ const (
 	TxByHashRoutePath              = "/v1/query/tx-by-hash"
 	OrderRoutePath                 = "/v1/query/order"
 	OrdersRoutePath                = "/v1/query/orders"
+	DexPriceRoutePath              = "/v1/query/dex-price"
+	DexBatchRoutePath              = "/v1/query/dex-batch"
+	NextDexBatchRoutePath          = "/v1/query/next-dex-batch"
 	LastProposersRoutePath         = "/v1/query/last-proposers"
 	IsValidDoubleSignerRoutePath   = "/v1/query/valid-double-signer"
 	DoubleSignersRoutePath         = "/v1/query/double-signers"
@@ -49,8 +52,11 @@ const (
 	PollRoutePath                  = "/v1/gov/poll"
 	RootChainInfoRoutePath         = "/v1/query/root-chain-info"
 	ValidatorSetRoutePath          = "/v1/query/validator-set"
-	CheckpointRoutePath            = "/v1/query/checkpoint"
-	KeystoreRoutePath              = "/v1/admin/keystore"
+	CheckpointRoutePath               = "/v1/query/checkpoint"
+	KeystoreRoutePath                 = "/v1/admin/keystore"
+	TxDexLimitOrderRoutePath          = "/v1/admin/tx-dex-limit-order"
+	TxDexLiquidityDepositRoutePath    = "/v1/admin/tx-dex-liquidity-deposit"
+	TxDexLiquidityWithdrawRoutePath   = "/v1/admin/tx-dex-liquidity-withdraw"
 )
 
 const (
@@ -91,14 +97,20 @@ const (
 	PollRouteName                  = "poll"
 	OrderRouteName                 = "order"
 	OrdersRouteName                = "orders"
+	DexPriceRouteName              = "dex-price"
+	DexBatchRouteName              = "dex-batch"
+	NextDexBatchRouteName          = "next-dex-batch"
 	LastProposersRouteName         = "last-proposers"
 	IsValidDoubleSignerRouteName   = "valid-double-signer"
 	DoubleSignersRouteName         = "double-signers"
 	MinimumEvidenceHeightRouteName = "minimum-evidence-height"
 	LotteryRouteName               = "lottery"
 	RootChainInfoRouteName         = "root-chain-info"
-	CheckpointRouteName            = "checkpoint"
-	KeystoreRouteName              = "keystore"
+	CheckpointRouteName                = "checkpoint"
+	KeystoreRouteName                  = "keystore"
+	TxDexLimitOrderRouteName           = "tx-dex-limit-order"
+	TxDexLiquidityDepositRouteName     = "tx-dex-liquidity-deposit"
+	TxDexLiquidityWithdrawRouteName    = "tx-dex-liquidity-withdraw"
 )
 
 // routes contains the method and path for a canopy command
@@ -142,6 +154,9 @@ var routePaths = routes{
 	TxByHashRouteName:              {Method: http.MethodPost, Path: TxByHashRoutePath},
 	OrderRouteName:                 {Method: http.MethodPost, Path: OrderRoutePath},
 	OrdersRouteName:                {Method: http.MethodPost, Path: OrdersRoutePath},
+	DexPriceRouteName:              {Method: http.MethodPost, Path: DexPriceRoutePath},
+	DexBatchRouteName:              {Method: http.MethodPost, Path: DexBatchRoutePath},
+	NextDexBatchRouteName:          {Method: http.MethodPost, Path: NextDexBatchRoutePath},
 	LastProposersRouteName:         {Method: http.MethodPost, Path: LastProposersRoutePath},
 	IsValidDoubleSignerRouteName:   {Method: http.MethodPost, Path: IsValidDoubleSignerRoutePath},
 	DoubleSignersRouteName:         {Method: http.MethodPost, Path: DoubleSignersRoutePath},
@@ -152,6 +167,9 @@ var routePaths = routes{
 	PollRouteName:                  {Method: http.MethodGet, Path: PollRoutePath},
 	RootChainInfoRouteName:         {Method: http.MethodPost, Path: RootChainInfoRoutePath},
 	ValidatorSetRouteName:          {Method: http.MethodPost, Path: ValidatorSetRoutePath},
-	CheckpointRouteName:            {Method: http.MethodPost, Path: CheckpointRoutePath},
-	KeystoreRouteName:              {Method: http.MethodGet, Path: KeystoreRoutePath},
+	CheckpointRouteName:               {Method: http.MethodPost, Path: CheckpointRoutePath},
+	KeystoreRouteName:                 {Method: http.MethodGet, Path: KeystoreRoutePath},
+	TxDexLimitOrderRouteName:          {Method: http.MethodPost, Path: TxDexLimitOrderRoutePath},
+	TxDexLiquidityDepositRouteName:    {Method: http.MethodPost, Path: TxDexLiquidityDepositRoutePath},
+	TxDexLiquidityWithdrawRouteName:   {Method: http.MethodPost, Path: TxDexLiquidityWithdrawRoutePath},
 }

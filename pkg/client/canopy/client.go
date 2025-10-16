@@ -183,6 +183,24 @@ func (c *Client) Orders(height, chainId uint64) (p *lib.OrderBooks, err lib.Erro
 	return
 }
 
+func (c *Client) DexPrice(height, chainId uint64) (p *lib.DexPrice, err lib.ErrorI) {
+	p = new(lib.DexPrice)
+	err = c.heightAndIdRequest(DexPriceRouteName, height, chainId, p)
+	return
+}
+
+func (c *Client) DexBatch(height, chainId uint64, withPoints bool) (p *lib.DexBatch, err lib.ErrorI) {
+	p = new(lib.DexBatch)
+	err = c.heightIdAndPointsRequest(DexBatchRouteName, height, chainId, withPoints, p)
+	return
+}
+
+func (c *Client) NextDexBatch(height, chainId uint64, withPoints bool) (p *lib.DexBatch, err lib.ErrorI) {
+	p = new(lib.DexBatch)
+	err = c.heightIdAndPointsRequest(NextDexBatchRouteName, height, chainId, withPoints, p)
+	return
+}
+
 func (c *Client) LastProposers(height uint64) (p *lib.Proposers, err lib.ErrorI) {
 	p = new(lib.Proposers)
 	err = c.heightRequest(LastProposersRouteName, height, p)
@@ -407,6 +425,21 @@ func (c *Client) heightAndIdRequest(routeName string, height, id uint64, ptr any
 	return
 }
 
+func (c *Client) heightIdAndPointsRequest(routeName string, height, id uint64, points bool, ptr any) (err lib.ErrorI) {
+	bz, err := lib.MarshalJSON(heightIdAndPointsRequest{
+		heightAndIdRequest: heightAndIdRequest{
+			heightRequest: heightRequest{height},
+			idRequest:     idRequest{id},
+		},
+		Points: points,
+	})
+	if err != nil {
+		return
+	}
+	err = c.post(routeName, bz, ptr)
+	return
+}
+
 func (c *Client) url(routeName, param string) string {
 	return c.rpcURL + routePaths[routeName].Path + param
 }
@@ -436,6 +469,89 @@ func (c *Client) unmarshal(resp *http.Response, ptr any) lib.ErrorI {
 		return lib.ErrHttpStatus(resp.Status, resp.StatusCode, bz)
 	}
 	return lib.UnmarshalJSON(bz, ptr)
+}
+
+// Helper function for transaction requests
+func getFrom(address, nickname string) (from fromFields, err lib.ErrorI) {
+	if address != "" {
+		from.Address, err = lib.NewHexBytesFromString(address)
+		if err != nil {
+			return
+		}
+	}
+	from.Nickname = nickname
+	return from, nil
+}
+
+// transactionRequest handles transaction submission or preview
+func (c *Client) transactionRequest(routeName string, txRequest any, submit bool) (hash *string, tx json.RawMessage, e lib.ErrorI) {
+	bz, e := lib.MarshalJSON(txRequest)
+	if e != nil {
+		return
+	}
+	if submit {
+		hash = new(string)
+		e = c.post(routeName, bz, hash)
+	} else {
+		tx = json.RawMessage{}
+		e = c.post(routeName, bz, &tx)
+	}
+	return
+}
+
+// TxDexLimitOrder creates a DEX limit order transaction
+func (c *Client) TxDexLimitOrder(from AddrOrNickname, amount, receiveAmount, chainId uint64,
+	pwd string, submit bool, optFee uint64) (hash *string, tx json.RawMessage, e lib.ErrorI) {
+	txReq := txDexLimitOrder{
+		Fee:               optFee,
+		Amount:            amount,
+		ReceiveAmount:     receiveAmount,
+		Submit:            submit,
+		Password:          pwd,
+		committeesRequest: committeesRequest{fmt.Sprintf("%d", chainId)},
+	}
+	var err lib.ErrorI
+	txReq.fromFields, err = getFrom(from.Address, from.Nickname)
+	if err != nil {
+		return nil, nil, err
+	}
+	return c.transactionRequest(TxDexLimitOrderRouteName, txReq, submit)
+}
+
+// TxDexLiquidityDeposit creates a DEX liquidity deposit transaction
+func (c *Client) TxDexLiquidityDeposit(from AddrOrNickname, amount, chainId uint64,
+	pwd string, submit bool, optFee uint64) (hash *string, tx json.RawMessage, e lib.ErrorI) {
+	txReq := txDexLiquidityDeposit{
+		Fee:               optFee,
+		Amount:            amount,
+		Submit:            submit,
+		Password:          pwd,
+		committeesRequest: committeesRequest{fmt.Sprintf("%d", chainId)},
+	}
+	var err lib.ErrorI
+	txReq.fromFields, err = getFrom(from.Address, from.Nickname)
+	if err != nil {
+		return nil, nil, err
+	}
+	return c.transactionRequest(TxDexLiquidityDepositRouteName, txReq, submit)
+}
+
+// TxDexLiquidityWithdraw creates a DEX liquidity withdrawal transaction
+func (c *Client) TxDexLiquidityWithdraw(from AddrOrNickname, percent int, chainId uint64,
+	pwd string, submit bool, optFee uint64) (hash *string, tx json.RawMessage, e lib.ErrorI) {
+	txReq := txDexLiquidityWithdraw{
+		Fee:               optFee,
+		Percent:           percent,
+		Submit:            submit,
+		Password:          pwd,
+		committeesRequest: committeesRequest{fmt.Sprintf("%d", chainId)},
+	}
+	var err lib.ErrorI
+	txReq.fromFields, err = getFrom(from.Address, from.Nickname)
+	if err != nil {
+		return nil, nil, err
+	}
+	return c.transactionRequest(TxDexLiquidityWithdrawRouteName, txReq, submit)
 }
 
 // Keystore methods (optional - can be used if needed)

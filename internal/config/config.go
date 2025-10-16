@@ -35,6 +35,9 @@ type Config struct {
 	RootChainURL    string // WebSocket URL for root chain subscription
 	RootChainID     uint64 // Chain ID to subscribe to
 	RootChainRPCURL string // HTTP URL for RPC client to fetch transactions
+
+	// Graduation configuration
+	GraduationRPCURL string // HTTP URL for graduation RPC endpoint
 }
 
 func Load() (*Config, error) {
@@ -53,6 +56,7 @@ func Load() (*Config, error) {
 		RootChainURL:       getEnv("ROOT_CHAIN_URL", "ws://localhost:8081"),
 		RootChainID:        uint64(getEnvInt("ROOT_CHAIN_ID", 1)),
 		RootChainRPCURL:    getEnv("ROOT_CHAIN_RPC_URL", "http://localhost:8081"),
+		GraduationRPCURL:   getEnv("GRADUATION_RPC_URL", "http://localhost:8082/graduate"),
 	}
 
 	if err := cfg.validate(); err != nil {
