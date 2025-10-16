@@ -1,0 +1,642 @@
+package graduator
+
+import (
+	"bytes"
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+	"text/template"
+
+	"github.com/enielson/launchpad/internal/repository/interfaces"
+	"github.com/enielson/launchpad/internal/testutil/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+func TestGenesisAccountStructure(t *testing.T) {
+	account := GenesisAccount{
+		Address: "0x1234567890abcdef",
+	args := m.Called(ctx, id, includeRelations)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Chain), args.Error(1)
+}
+
+func (m *MockChainRepository) GetByName(ctx context.Context, name string) (*models.Chain, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*models.Chain), args.Error(1)
+}
+
+func (m *MockChainRepository) GetByAddress(ctx context.Context, address string) (*models.Chain, error) {
+	args := m.Called(ctx, address)
+	return args.Get(0).(*models.Chain), args.Error(1)
+}
+
+func (m *MockChainRepository) Create(ctx context.Context, chain *models.Chain) (*models.Chain, error) {
+	args := m.Called(ctx, chain)
+	return args.Get(0).(*models.Chain), args.Error(1)
+}
+
+func (m *MockChainRepository) Update(ctx context.Context, chain *models.Chain) (*models.Chain, error) {
+	args := m.Called(ctx, chain)
+	return args.Get(0).(*models.Chain), args.Error(1)
+}
+
+func (m *MockChainRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) List(ctx context.Context, filters interfaces.ChainFilters, pagination interfaces.Pagination) ([]models.Chain, int, error) {
+	args := m.Called(ctx, filters, pagination)
+	return args.Get(0).([]models.Chain), args.Int(1), args.Error(2)
+}
+
+func (m *MockChainRepository) ListByCreator(ctx context.Context, creatorID uuid.UUID, pagination interfaces.Pagination) ([]models.Chain, int, error) {
+	args := m.Called(ctx, creatorID, pagination)
+	return args.Get(0).([]models.Chain), args.Int(1), args.Error(2)
+}
+
+func (m *MockChainRepository) ListByTemplate(ctx context.Context, templateID uuid.UUID, pagination interfaces.Pagination) ([]models.Chain, int, error) {
+	args := m.Called(ctx, templateID, pagination)
+	return args.Get(0).([]models.Chain), args.Int(1), args.Error(2)
+}
+
+func (m *MockChainRepository) ListByStatus(ctx context.Context, status string, pagination interfaces.Pagination) ([]models.Chain, int, error) {
+	args := m.Called(ctx, status, pagination)
+	return args.Get(0).([]models.Chain), args.Int(1), args.Error(2)
+}
+
+func (m *MockChainRepository) CreateRepository(ctx context.Context, repo *models.ChainRepository) (*models.ChainRepository, error) {
+	args := m.Called(ctx, repo)
+	return args.Get(0).(*models.ChainRepository), args.Error(1)
+}
+
+func (m *MockChainRepository) UpdateRepository(ctx context.Context, repo *models.ChainRepository) (*models.ChainRepository, error) {
+	args := m.Called(ctx, repo)
+	return args.Get(0).(*models.ChainRepository), args.Error(1)
+}
+
+func (m *MockChainRepository) GetRepositoryByChainID(ctx context.Context, chainID uuid.UUID) (*models.ChainRepository, error) {
+	args := m.Called(ctx, chainID)
+	return args.Get(0).(*models.ChainRepository), args.Error(1)
+}
+
+func (m *MockChainRepository) DeleteRepository(ctx context.Context, chainID uuid.UUID) error {
+	args := m.Called(ctx, chainID)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) CreateSocialLinks(ctx context.Context, chainID uuid.UUID, links []models.ChainSocialLink) error {
+	args := m.Called(ctx, chainID, links)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) UpdateSocialLinks(ctx context.Context, chainID uuid.UUID, links []models.ChainSocialLink) error {
+	args := m.Called(ctx, chainID, links)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) GetSocialLinksByChainID(ctx context.Context, chainID uuid.UUID) ([]models.ChainSocialLink, error) {
+	args := m.Called(ctx, chainID)
+	return args.Get(0).([]models.ChainSocialLink), args.Error(1)
+}
+
+func (m *MockChainRepository) DeleteSocialLinksByChainID(ctx context.Context, chainID uuid.UUID) error {
+	args := m.Called(ctx, chainID)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) CreateAssets(ctx context.Context, chainID uuid.UUID, assets []models.ChainAsset) error {
+	args := m.Called(ctx, chainID, assets)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) UpdateAssets(ctx context.Context, chainID uuid.UUID, assets []models.ChainAsset) error {
+	args := m.Called(ctx, chainID, assets)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) GetAssetsByChainID(ctx context.Context, chainID uuid.UUID) ([]models.ChainAsset, error) {
+	args := m.Called(ctx, chainID)
+	return args.Get(0).([]models.ChainAsset), args.Error(1)
+}
+
+func (m *MockChainRepository) DeleteAssetsByChainID(ctx context.Context, chainID uuid.UUID) error {
+	args := m.Called(ctx, chainID)
+	return args.Error(0)
+}
+
+func (m *MockChainRepository) CreateChainKey(ctx context.Context, key *models.ChainKey) (*models.ChainKey, error) {
+	args := m.Called(ctx, key)
+	return args.Get(0).(*models.ChainKey), args.Error(1)
+}
+
+func (m *MockChainRepository) GetChainKeyByChainID(ctx context.Context, chainID uuid.UUID, purpose string) (*models.ChainKey, error) {
+	args := m.Called(ctx, chainID, purpose)
+	return args.Get(0).(*models.ChainKey), args.Error(1)
+}
+
+// MockVirtualPoolRepository for testing
+type MockVirtualPoolRepository struct {
+	mock.Mock
+}
+
+func (m *MockVirtualPoolRepository) Create(ctx context.Context, pool *models.VirtualPool) (*models.VirtualPool, error) {
+	args := m.Called(ctx, pool)
+	return args.Get(0).(*models.VirtualPool), args.Error(1)
+}
+
+func (m *MockVirtualPoolRepository) GetPoolByChainID(ctx context.Context, chainID uuid.UUID) (*models.VirtualPool, error) {
+	args := m.Called(ctx, chainID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.VirtualPool), args.Error(1)
+}
+
+func (m *MockVirtualPoolRepository) GetAllPools(ctx context.Context, pagination interfaces.Pagination) ([]models.VirtualPool, int, error) {
+	args := m.Called(ctx, pagination)
+	return args.Get(0).([]models.VirtualPool), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) UpdatePoolState(ctx context.Context, chainID uuid.UUID, update *interfaces.PoolStateUpdate) error {
+	args := m.Called(ctx, chainID, update)
+	return args.Error(0)
+}
+
+func (m *MockVirtualPoolRepository) CreateTransaction(ctx context.Context, transaction *models.VirtualPoolTransaction) error {
+	args := m.Called(ctx, transaction)
+	return args.Error(0)
+}
+
+func (m *MockVirtualPoolRepository) GetTransactionsByPoolID(ctx context.Context, poolID uuid.UUID, pagination interfaces.Pagination) ([]models.VirtualPoolTransaction, int, error) {
+	args := m.Called(ctx, poolID, pagination)
+	return args.Get(0).([]models.VirtualPoolTransaction), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) GetTransactionsByUserID(ctx context.Context, userID uuid.UUID, pagination interfaces.Pagination) ([]models.VirtualPoolTransaction, int, error) {
+	args := m.Called(ctx, userID, pagination)
+	return args.Get(0).([]models.VirtualPoolTransaction), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) GetTransactionsByChainID(ctx context.Context, chainID uuid.UUID, filters interfaces.TransactionFilters, pagination interfaces.Pagination) ([]models.VirtualPoolTransaction, int, error) {
+	args := m.Called(ctx, chainID, filters, pagination)
+	return args.Get(0).([]models.VirtualPoolTransaction), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+	args := m.Called(ctx, userID, chainID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.UserVirtualPosition), args.Error(1)
+}
+
+func (m *MockVirtualPoolRepository) UpsertUserPosition(ctx context.Context, position *models.UserVirtualPosition) error {
+	args := m.Called(ctx, position)
+	return args.Error(0)
+}
+
+func (m *MockVirtualPoolRepository) GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination interfaces.Pagination) ([]models.UserVirtualPosition, int, error) {
+	args := m.Called(ctx, chainID, pagination)
+	return args.Get(0).([]models.UserVirtualPosition), args.Int(1), args.Error(2)
+}
+
+func (m *MockVirtualPoolRepository) GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]interfaces.UserPositionWithAddress, error) {
+	args := m.Called(ctx, chainID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]interfaces.UserPositionWithAddress), args.Error(1)
+}
+
+func TestGenesisAccountStructure(t *testing.T) {
+	account := GenesisAccount{
+		Address: "0x1234567890abcdef",
+		Amount:  1000000,
+	}
+
+	if account.Address == "" {
+		t.Error("Address should not be empty")
+	}
+	if account.Amount <= 0 {
+		t.Error("Amount should be positive")
+	}
+}
+
+func TestGenesisDataStructure(t *testing.T) {
+	data := GenesisData{
+		Accounts: []GenesisAccount{
+			{Address: "0xabc", Amount: 100},
+			{Address: "0xdef", Amount: 200},
+		},
+	}
+
+	if len(data.Accounts) != 2 {
+		t.Errorf("Expected 2 accounts, got %d", len(data.Accounts))
+	}
+}
+
+func TestTemplateProcessing(t *testing.T) {
+	t.Run("simple template with two accounts", func(t *testing.T) {
+		// Create a simple test template
+		tmplContent := `{
+    "accounts": [
+        {{- range $index, $account := .Accounts }}
+        {{- if $index }},{{ end }}
+        {
+            "address": "{{ $account.Address }}",
+            "amount": {{ $account.Amount }}
+        }
+        {{- end }}
+    ]
+}`
+
+		tmpl, err := template.New("test").Parse(tmplContent)
+		assert.NoError(t, err)
+
+		data := GenesisData{
+			Accounts: []GenesisAccount{
+				{Address: "0x1234567890abcdef", Amount: 1000000},
+				{Address: "0xfedcba0987654321", Amount: 2000000},
+			},
+		}
+
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		output := buf.String()
+		assert.Contains(t, output, `"address": "0x1234567890abcdef"`)
+		assert.Contains(t, output, `"amount": 1000000`)
+		assert.Contains(t, output, `"address": "0xfedcba0987654321"`)
+		assert.Contains(t, output, `"amount": 2000000`)
+	})
+
+	t.Run("template with no accounts", func(t *testing.T) {
+		tmplContent := `{
+    "accounts": [
+        {{- range $index, $account := .Accounts }}
+        {{- if $index }},{{ end }}
+        {
+            "address": "{{ $account.Address }}",
+            "amount": {{ $account.Amount }}
+        }
+        {{- end }}
+    ]
+}`
+
+		tmpl, err := template.New("test").Parse(tmplContent)
+		assert.NoError(t, err)
+
+		data := GenesisData{
+			Accounts: []GenesisAccount{},
+		}
+
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		output := buf.String()
+		assert.Contains(t, output, `"accounts": [`)
+		assert.Contains(t, output, `]`)
+	})
+
+	t.Run("template with single account", func(t *testing.T) {
+		tmplContent := `{
+    "accounts": [
+        {{- range $index, $account := .Accounts }}
+        {{- if $index }},{{ end }}
+        {
+            "address": "{{ $account.Address }}",
+            "amount": {{ $account.Amount }}
+        }
+        {{- end }}
+    ]
+}`
+
+		tmpl, err := template.New("test").Parse(tmplContent)
+		assert.NoError(t, err)
+
+		data := GenesisData{
+			Accounts: []GenesisAccount{
+				{Address: "0xsingleaddress", Amount: 5000000},
+			},
+		}
+
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		output := buf.String()
+		assert.Contains(t, output, `"address": "0xsingleaddress"`)
+		assert.Contains(t, output, `"amount": 5000000`)
+		// Should not have trailing comma
+		assert.NotContains(t, output, "},\n    ]")
+	})
+}
+
+func TestGenerateGenesisFile(t *testing.T) {
+	t.Run("successful generation with mock data", func(t *testing.T) {
+		// Create temporary template file
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		templateContent := `{
+    "accounts": [
+        {{- range $index, $account := .Accounts }}
+        {{- if $index }},{{ end }}
+        {
+            "address": "{{ $account.Address }}",
+            "amount": {{ $account.Amount }}
+        }
+        {{- end }}
+    ]
+}`
+		err := os.WriteFile(templatePath, []byte(templateContent), 0644)
+		assert.NoError(t, err)
+
+		// Setup mocks
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		positions := []interfaces.UserPositionWithAddress{
+			{WalletAddress: "0xalice123", TokenBalance: 1000000},
+			{WalletAddress: "0xbob456", TokenBalance: 2000000},
+			{WalletAddress: "0xcharlie789", TokenBalance: 500000},
+		}
+
+		virtualPoolRepo.On("GetPositionsWithUsersByChainID", mock.Anything, chainID).Return(positions, nil)
+
+		// Capture stdout
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		// Create graduator and generate file
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err = grad.GenerateGenesisFile(context.Background(), chainID)
+		assert.NoError(t, err)
+
+		// Restore stdout and read output
+		w.Close()
+		os.Stdout = oldStdout
+
+		var buf bytes.Buffer
+		buf.ReadFrom(r)
+		output := buf.String()
+
+		// Verify output contains all accounts
+		assert.Contains(t, output, `"address": "0xalice123"`)
+		assert.Contains(t, output, `"amount": 1000000`)
+		assert.Contains(t, output, `"address": "0xbob456"`)
+		assert.Contains(t, output, `"amount": 2000000`)
+		assert.Contains(t, output, `"address": "0xcharlie789"`)
+		assert.Contains(t, output, `"amount": 500000`)
+
+		virtualPoolRepo.AssertExpectations(t)
+	})
+
+	t.Run("template file not found", func(t *testing.T) {
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		positions := []interfaces.UserPositionWithAddress{
+			{WalletAddress: "0xtest", TokenBalance: 1000},
+		}
+
+		virtualPoolRepo.On("GetPositionsWithUsersByChainID", mock.Anything, chainID).Return(positions, nil)
+
+		grad := New(chainRepo, virtualPoolRepo, "/nonexistent/template.json")
+		err := grad.GenerateGenesisFile(context.Background(), chainID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse template")
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		templateContent := `{"accounts": []}`
+		err := os.WriteFile(templatePath, []byte(templateContent), 0644)
+		assert.NoError(t, err)
+
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		virtualPoolRepo.On("GetPositionsWithUsersByChainID", mock.Anything, chainID).Return(nil, assert.AnError)
+
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err = grad.GenerateGenesisFile(context.Background(), chainID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get positions")
+
+		virtualPoolRepo.AssertExpectations(t)
+	})
+}
+
+func TestCheckAndGraduate(t *testing.T) {
+	t.Run("successful graduation", func(t *testing.T) {
+		// Create temporary template file
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		templateContent := `{"accounts": []}`
+		err := os.WriteFile(templatePath, []byte(templateContent), 0644)
+		assert.NoError(t, err)
+
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		chain := &models.Chain{
+			ID:                  chainID,
+			ChainName:           "TestChain",
+			GraduationThreshold: 50000.0,
+			IsGraduated:         false,
+		}
+
+		pool := &models.VirtualPool{
+			ID:          uuid.New(),
+			ChainID:     chainID,
+			CNPYReserve: 55000.0, // Above threshold
+		}
+
+		positions := []interfaces.UserPositionWithAddress{
+			{WalletAddress: "0xtest", TokenBalance: 1000},
+		}
+
+		chainRepo.On("GetByID", mock.Anything, chainID, []string{}).Return(chain, nil)
+		virtualPoolRepo.On("GetPoolByChainID", mock.Anything, chainID).Return(pool, nil)
+		virtualPoolRepo.On("GetPositionsWithUsersByChainID", mock.Anything, chainID).Return(positions, nil)
+
+		// Redirect stdout to avoid test output
+		oldStdout := os.Stdout
+		r, w, _ := os.Pipe()
+		os.Stdout = w
+
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err = grad.CheckAndGraduate(context.Background(), chainID)
+
+		// Restore stdout
+		w.Close()
+		os.Stdout = oldStdout
+
+		// Discard output
+		buf := make([]byte, 1024)
+		r.Read(buf)
+
+		assert.NoError(t, err)
+
+		chainRepo.AssertExpectations(t)
+		virtualPoolRepo.AssertExpectations(t)
+	})
+
+	t.Run("threshold not met", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		templateContent := `{"accounts": []}`
+		err := os.WriteFile(templatePath, []byte(templateContent), 0644)
+		assert.NoError(t, err)
+
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		chain := &models.Chain{
+			ID:                  chainID,
+			ChainName:           "TestChain",
+			GraduationThreshold: 50000.0,
+			IsGraduated:         false,
+		}
+
+		pool := &models.VirtualPool{
+			ID:          uuid.New(),
+			ChainID:     chainID,
+			CNPYReserve: 30000.0, // Below threshold
+		}
+
+		chainRepo.On("GetByID", mock.Anything, chainID, []string{}).Return(chain, nil)
+		virtualPoolRepo.On("GetPoolByChainID", mock.Anything, chainID).Return(pool, nil)
+
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err = grad.CheckAndGraduate(context.Background(), chainID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "graduation threshold not met")
+		assert.Contains(t, err.Error(), "current 30000")
+		assert.Contains(t, err.Error(), "required 50000")
+
+		chainRepo.AssertExpectations(t)
+		virtualPoolRepo.AssertExpectations(t)
+	})
+
+	t.Run("already graduated", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		chain := &models.Chain{
+			ID:          chainID,
+			ChainName:   "TestChain",
+			IsGraduated: true, // Already graduated
+		}
+
+		chainRepo.On("GetByID", mock.Anything, chainID, []string{}).Return(chain, nil)
+
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err := grad.CheckAndGraduate(context.Background(), chainID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "already graduated")
+
+		chainRepo.AssertExpectations(t)
+	})
+
+	t.Run("chain not found", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		chainRepo.On("GetByID", mock.Anything, chainID, []string{}).Return(nil, assert.AnError)
+
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err := grad.CheckAndGraduate(context.Background(), chainID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get chain")
+
+		chainRepo.AssertExpectations(t)
+	})
+
+	t.Run("pool not found", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		templatePath := filepath.Join(tmpDir, "genesis.json.template")
+
+		chainID := uuid.New()
+		chainRepo := new(MockChainRepository)
+		virtualPoolRepo := new(MockVirtualPoolRepository)
+
+		chain := &models.Chain{
+			ID:                  chainID,
+			ChainName:           "TestChain",
+			GraduationThreshold: 50000.0,
+			IsGraduated:         false,
+		}
+
+		chainRepo.On("GetByID", mock.Anything, chainID, []string{}).Return(chain, nil)
+		virtualPoolRepo.On("GetPoolByChainID", mock.Anything, chainID).Return(nil, assert.AnError)
+
+		grad := New(chainRepo, virtualPoolRepo, templatePath)
+		err := grad.CheckAndGraduate(context.Background(), chainID)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to get virtual pool")
+
+		chainRepo.AssertExpectations(t)
+		virtualPoolRepo.AssertExpectations(t)
+	})
+}
+
+func TestNew(t *testing.T) {
+	chainRepo := new(MockChainRepository)
+	virtualPoolRepo := new(MockVirtualPoolRepository)
+	templatePath := "/path/to/template"
+
+	grad := New(chainRepo, virtualPoolRepo, templatePath)
+
+	assert.NotNil(t, grad)
+	assert.Equal(t, chainRepo, grad.chainRepo)
+	assert.Equal(t, virtualPoolRepo, grad.virtualPoolRepo)
+	assert.Equal(t, templatePath, grad.templatePath)
+}
+
+// Example of how to use the graduator in production:
+//
+// func main() {
+//     db := database.Connect(databaseURL)
+//     chainRepo := postgres.NewChainRepository(db, userRepo, templateRepo)
+//     virtualPoolRepo := postgres.NewVirtualPoolRepository(db)
+//
+//     graduator := graduator.New(
+//         chainRepo,
+//         virtualPoolRepo,
+//         "templates/genesis/genesis.json.template",
+//     )
+//
+//     chainID := uuid.MustParse("your-chain-id")
+//     err := graduator.CheckAndGraduate(context.Background(), chainID)
+//     if err != nil {
+//         log.Fatalf("Failed to graduate chain: %v", err)
+//     }
+// }

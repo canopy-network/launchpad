@@ -1,0 +1,73 @@
+{
+    "time": "2025-05-12 16:39:17",
+    "accounts": [
+        {{- range $index, $account := .Accounts }}
+        {{- if $index }},{{ end }}
+        {
+            "address": "{{ $account.Address }}",
+            "amount": {{ $account.Amount }}
+        }
+        {{- end }}
+    ],
+    "nonSigners": null,
+    "validators": [
+        {
+            "address": "851e90eaef1fa27debaee2c2591503bdeec1d123",
+            "publicKey": "b88a5928e54cbf0a36e0b98f5bcf02de9a9a1deba6994739f9160181a609f516eb702936a0cbf4c1f2e7e6be5b8272f2",
+            "committees": [
+                1
+            ],
+            "netAddress": "tcp://localhost",
+            "stakedAmount": 1000000000000,
+            "maxPausedHeight": 0,
+            "unstakingHeight": 0,
+            "output": "851e90eaef1fa27debaee2c2591503bdeec1d123",
+            "delegate": false,
+            "compound": true
+        }
+    ],
+    "params": {
+        "consensus": {
+            "blockSize": 1000000,
+            "protocolVersion": "1/0",
+            "rootChainID": 1
+        },
+        "validator": {
+            "unstakingBlocks": 2,
+            "maxPauseBlocks": 4380,
+            "doubleSignSlashPercentage": 10,
+            "nonSignSlashPercentage": 1,
+            "maxNonSign": 3,
+            "nonSignWindow": 5,
+            "maxCommittees": 15,
+            "maxCommitteeSize": 100,
+            "earlyWithdrawalPenalty": 20,
+            "delegateUnstakingBlocks": 2,
+            "minimumOrderSize": 1000000,
+            "stakePercentForSubsidizedCommittee": 33,
+            "maxSlashPerCommittee": 15,
+            "delegateRewardPercentage": 10,
+            "buyDeadlineBlocks": 60,
+            "lockOrderFeeMultiplier": 2
+        },
+        "fee": {
+            "sendFee": 10000,
+            "stakeFee": 10000,
+            "editStakeFee": 10000,
+            "unstakeFee": 10000,
+            "pauseFee": 10000,
+            "unpauseFee": 10000,
+            "changeParameterFee": 10000,
+            "daoTransferFee": 10000,
+            "certificateResultsFee": 0,
+            "subsidyFee": 10000,
+            "createOrderFee": 10000,
+            "editOrderFee": 10000,
+            "deleteOrderFee": 10000
+        },
+        "governance": {
+            "daoRewardPercentage": 5
+        }
+    },
+    "supply": null
+}
