@@ -114,6 +114,9 @@ func (s *Server) setupRoutes() {
 		s.Router.Get("/api/v1/routes", handlers.ListRoutes(s.Router))
 	}
 
+	// Create auth middleware
+	authMiddleware := custommiddleware.AuthMiddleware(s.Services.AuthService)
+
 	// API v1 routes
 	s.Router.Route("/api/v1", func(r chi.Router) {
 		// Public routes (no authentication required)
@@ -123,33 +126,36 @@ func (s *Server) setupRoutes() {
 			// Rate limiting is disabled in development/test environments
 			r.With(custommiddleware.RateLimitMiddleware(s.EmailRateLimiter)).Post("/auth/email", s.Handlers.AuthHandler.SendEmailCode)
 			r.Post("/auth/verify", s.Handlers.AuthHandler.VerifyEmailCode)
+
+			// Public read-only endpoints
+			r.Get("/templates", s.Handlers.TemplateHandler.GetTemplates)
+			r.Get("/chains", s.Handlers.ChainHandler.GetChains)
 		})
 
 		// Protected routes (authentication required)
 		r.Group(func(r chi.Router) {
-			// For now, we'll add a placeholder auth middleware
-			// In production, this would validate JWT tokens
-			r.Use(s.authMiddleware)
+			// Use the new session token authentication middleware
+			r.Use(authMiddleware)
 
-			// Template routes
-			r.Get("/templates", s.Handlers.TemplateHandler.GetTemplates)
+			// Auth/session management routes
+			r.Route("/auth", func(r chi.Router) {
+				r.Post("/logout", s.Handlers.AuthHandler.Logout)
+				r.Get("/sessions", s.Handlers.AuthHandler.GetSessions)
+				r.Delete("/sessions/{id}", s.Handlers.AuthHandler.RevokeSession)
+			})
 
 			// Virtual pool routes
 			r.Get("/virtual-pools", s.Handlers.VirtualPoolHandler.GetVirtualPools)
 
-			// Chain routes
-			r.Route("/chains", func(r chi.Router) {
-				r.Get("/", s.Handlers.ChainHandler.GetChains)
-				r.Post("/", s.Handlers.ChainHandler.CreateChain)
+			// Chain routes (protected operations only)
+			r.Post("/chains", s.Handlers.ChainHandler.CreateChain)
+			r.Route("/chains/{id}", func(r chi.Router) {
+				r.Get("/", s.Handlers.ChainHandler.GetChain)
+				r.Delete("/", s.Handlers.ChainHandler.DeleteChain)
 
-				r.Route("/{id}", func(r chi.Router) {
-					r.Get("/", s.Handlers.ChainHandler.GetChain)
-					r.Delete("/", s.Handlers.ChainHandler.DeleteChain)
-
-					// Virtual pool endpoints
-					r.Get("/virtual-pool", s.Handlers.ChainHandler.GetVirtualPool)
-					r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
-				})
+				// Virtual pool endpoints
+				r.Get("/virtual-pool", s.Handlers.ChainHandler.GetVirtualPool)
+				r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
 			})
 
 			// Wallet routes
@@ -190,23 +196,6 @@ func (s *Server) jsonContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
-	})
-}
-
-// authMiddleware is a placeholder for JWT authentication
-// In production, this would validate JWT tokens and set user context
-func (s *Server) authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// For development, we'll use a mock user ID from header
-		userID := r.Header.Get("X-User-ID")
-		if userID == "" {
-			// In production, this would be extracted from JWT token
-			userID = "550e8400-e29b-41d4-a716-446655440000" // Mock UUID
-		}
-
-		// Set user ID in context
-		ctx := context.WithValue(r.Context(), "userID", userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

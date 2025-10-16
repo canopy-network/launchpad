@@ -21,6 +21,8 @@ type User struct {
 	TelegramHandle          *string                `json:"telegram_handle" db:"telegram_handle"`
 	IsVerified              bool                   `json:"is_verified" db:"is_verified"`
 	VerificationTier        string                 `json:"verification_tier" db:"verification_tier"`
+	EmailVerifiedAt         *time.Time             `json:"email_verified_at" db:"email_verified_at"`
+	JWTVersion              int                    `json:"-" db:"jwt_version"` // Don't expose in JSON
 	TotalChainsCreated      int                    `json:"total_chains_created" db:"total_chains_created"`
 	TotalCNPYInvested       float64                `json:"total_cnpy_invested" db:"total_cnpy_invested"`
 	ReputationScore         int                    `json:"reputation_score" db:"reputation_score"`

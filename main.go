@@ -11,6 +11,7 @@ import (
 	"github.com/enielson/launchpad/internal/server"
 	"github.com/enielson/launchpad/internal/services"
 	"github.com/enielson/launchpad/internal/workers/newblock"
+	sessioncleanup "github.com/enielson/launchpad/internal/workers/session_cleanup"
 	"github.com/enielson/launchpad/pkg/client/canopy"
 	"github.com/enielson/launchpad/pkg/database"
 )
@@ -35,6 +36,7 @@ func main() {
 	chainRepo := postgres.NewChainRepository(db, userRepo, templateRepo)
 	virtualPoolRepo := postgres.NewVirtualPoolRepository(db)
 	walletRepo := postgres.NewWalletRepository(db)
+	sessionTokenRepo := postgres.NewSessionTokenRepository(db)
 
 	// Initialize services
 	chainService := services.NewChainService(chainRepo, templateRepo, userRepo, virtualPoolRepo)
@@ -46,7 +48,7 @@ func main() {
 	emailService := services.NewSMTPEmailService()
 	log.Println("Using SMTP email service")
 
-	authService := services.NewAuthService(emailService)
+	authService := services.NewAuthService(emailService, userRepo, sessionTokenRepo)
 
 	// Create services container
 	servicesContainer := &server.Services{
@@ -74,6 +76,17 @@ func main() {
 
 	log.Printf("Started root chain worker (ChainID: %d, URL: %s)", cfg.RootChainID, cfg.RootChainURL)
 
+	// Initialize and start session cleanup worker
+	cleanupConfig := sessioncleanup.DefaultConfig()
+	cleanupWorker := sessioncleanup.NewWorker(sessionTokenRepo, cleanupConfig)
+
+	if err := cleanupWorker.Start(); err != nil {
+		log.Fatalf("Failed to start session cleanup worker: %v", err)
+	}
+	defer cleanupWorker.Stop()
+
+	log.Printf("Started session cleanup worker (interval: %v, retention: %d days)", cleanupConfig.Interval, cleanupConfig.RetentionDays)
+
 	// Create and start server
 	srv := server.NewServer(cfg, servicesContainer)
 
@@ -98,7 +111,10 @@ func main() {
 	case <-sigChan:
 		log.Println("Received shutdown signal, cleaning up...")
 		if err := worker.Stop(); err != nil {
-			log.Printf("Error stopping worker: %v", err)
+			log.Printf("Error stopping root chain worker: %v", err)
+		}
+		if err := cleanupWorker.Stop(); err != nil {
+			log.Printf("Error stopping session cleanup worker: %v", err)
 		}
 	case err := <-errChan:
 		log.Fatalf("Server failed to start: %v", err)

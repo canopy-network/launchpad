@@ -299,24 +299,111 @@ func (r *userRepository) UpdateLastActive(ctx context.Context, userID uuid.UUID)
 	return nil
 }
 
+// CreateOrGetByEmail creates a new user if they don't exist, or returns existing user
+func (r *userRepository) CreateOrGetByEmail(ctx context.Context, email string) (*models.User, bool, error) {
+	// First try to get existing user
+	existingUser, err := r.GetByEmail(ctx, email)
+	if err == nil {
+		// User exists
+		return existingUser, false, nil
+	}
+
+	// User doesn't exist, create a new one
+	// Generate a wallet address placeholder (user can update later)
+	walletAddress := fmt.Sprintf("email_%s", email)
+
+	user := &models.User{
+		WalletAddress:    walletAddress,
+		Email:            &email,
+		IsVerified:       false,
+		VerificationTier: models.VerificationTierBasic,
+		JWTVersion:       0,
+	}
+
+	createdUser, err := r.Create(ctx, user)
+	if err != nil {
+		// Check if there was a race condition and user was created by another request
+		existingUser, getErr := r.GetByEmail(ctx, email)
+		if getErr == nil {
+			return existingUser, false, nil
+		}
+		return nil, false, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return createdUser, true, nil
+}
+
+// MarkEmailVerified marks a user's email as verified
+func (r *userRepository) MarkEmailVerified(ctx context.Context, userID uuid.UUID) error {
+	query := `
+		UPDATE users
+		SET email_verified_at = CURRENT_TIMESTAMP,
+		    is_verified = TRUE,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND email_verified_at IS NULL`
+
+	result, err := r.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to mark email as verified: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		// User might already be verified, not an error
+		return nil
+	}
+
+	return nil
+}
+
+// IncrementJWTVersion increments the JWT version to invalidate all existing tokens
+func (r *userRepository) IncrementJWTVersion(ctx context.Context, userID uuid.UUID) error {
+	query := `
+		UPDATE users
+		SET jwt_version = jwt_version + 1,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1`
+
+	result, err := r.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to increment JWT version: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found")
+	}
+
+	return nil
+}
+
 // Helper methods
 func (r *userRepository) getUserByField(ctx context.Context, field, value string) (*models.User, error) {
 	query := fmt.Sprintf(`
 		SELECT id, wallet_address, email, username, display_name, bio, avatar_url, website_url,
 			   twitter_handle, github_username, telegram_handle,
-			   is_verified, verification_tier, total_chains_created, total_cnpy_invested,
+			   is_verified, verification_tier, email_verified_at, jwt_version,
+			   total_chains_created, total_cnpy_invested,
 			   reputation_score, created_at, updated_at, last_active_at
 		FROM users WHERE %s = $1`, field)
 
 	var user models.User
 	var email, username, displayName, bio, avatarURL, websiteURL sql.NullString
 	var twitterHandle, githubUsername, telegramHandle sql.NullString
-	var lastActiveAt sql.NullTime
+	var emailVerifiedAt, lastActiveAt sql.NullTime
 
 	err := r.db.QueryRowxContext(ctx, query, value).Scan(
 		&user.ID, &user.WalletAddress, &email, &username, &displayName, &bio,
 		&avatarURL, &websiteURL, &twitterHandle, &githubUsername, &telegramHandle,
-		&user.IsVerified, &user.VerificationTier,
+		&user.IsVerified, &user.VerificationTier, &emailVerifiedAt, &user.JWTVersion,
 		&user.TotalChainsCreated, &user.TotalCNPYInvested, &user.ReputationScore,
 		&user.CreatedAt, &user.UpdatedAt, &lastActiveAt,
 	)
@@ -338,6 +425,9 @@ func (r *userRepository) getUserByField(ctx context.Context, field, value string
 	user.TwitterHandle = database.StringPtr(twitterHandle)
 	user.GithubUsername = database.StringPtr(githubUsername)
 	user.TelegramHandle = database.StringPtr(telegramHandle)
+	if emailVerifiedAt.Valid {
+		user.EmailVerifiedAt = &emailVerifiedAt.Time
+	}
 	if lastActiveAt.Valid {
 		user.LastActiveAt = &lastActiveAt.Time
 	}

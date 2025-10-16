@@ -32,6 +32,11 @@ type UserRepository interface {
 	UpdateCNPYInvestment(ctx context.Context, userID uuid.UUID, amount float64) error
 	UpdateReputationScore(ctx context.Context, userID uuid.UUID, score int) error
 	UpdateLastActive(ctx context.Context, userID uuid.UUID) error
+
+	// Authentication and session management
+	CreateOrGetByEmail(ctx context.Context, email string) (*models.User, bool, error) // Returns (user, isNew, error)
+	MarkEmailVerified(ctx context.Context, userID uuid.UUID) error
+	IncrementJWTVersion(ctx context.Context, userID uuid.UUID) error
 }
 
 // UserFilters represents filters for user queries

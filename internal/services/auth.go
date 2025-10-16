@@ -3,20 +3,33 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"math/big"
+	"net"
 	"sync"
 	"time"
+
+	"github.com/enielson/launchpad/internal/models"
+	"github.com/enielson/launchpad/internal/repository/interfaces"
+	"github.com/google/uuid"
 )
 
 var (
-	ErrInvalidCode = fmt.Errorf("invalid verification code")
-	ErrCodeExpired = fmt.Errorf("verification code expired")
+	ErrInvalidCode    = fmt.Errorf("invalid verification code")
+	ErrCodeExpired    = fmt.Errorf("verification code expired")
+	ErrInvalidToken   = fmt.Errorf("invalid session token")
+	ErrTokenExpired   = fmt.Errorf("session token expired")
+	ErrTokenRevoked   = fmt.Errorf("session token revoked")
+	ErrSessionInvalid = fmt.Errorf("session no longer valid")
 )
 
-// AuthService handles email authentication logic
+// AuthService handles email authentication and session management
 type AuthService struct {
 	emailService EmailService
+	userRepo     interfaces.UserRepository
+	sessionRepo  interfaces.SessionTokenRepository
 	codes        sync.Map // map[email]codeData
 }
 
@@ -26,9 +39,11 @@ type codeData struct {
 }
 
 // NewAuthService creates a new authentication service
-func NewAuthService(emailService EmailService) *AuthService {
+func NewAuthService(emailService EmailService, userRepo interfaces.UserRepository, sessionRepo interfaces.SessionTokenRepository) *AuthService {
 	return &AuthService{
 		emailService: emailService,
+		userRepo:     userRepo,
+		sessionRepo:  sessionRepo,
 	}
 }
 
@@ -105,4 +120,166 @@ func (s *AuthService) CleanupExpiredCodes() {
 		}
 		return true
 	})
+}
+
+// Session Token Management
+
+// CreateSession creates a new session token for a user
+func (s *AuthService) CreateSession(ctx context.Context, userID uuid.UUID, userAgent, ipAddress string) (string, *models.User, error) {
+	// Get user to retrieve JWT version
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Generate random 32-byte token
+	token, err := s.generateSecureToken(32)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	// Hash the token for storage
+	tokenHash := s.hashToken(token)
+
+	// Get first 8 characters for prefix
+	tokenPrefix := token[:8]
+
+	// Parse IP address
+	var ip *net.IP
+	if ipAddress != "" {
+		parsedIP := net.ParseIP(ipAddress)
+		if parsedIP != nil {
+			ip = &parsedIP
+		}
+	}
+
+	// Create session token model
+	sessionToken := &models.SessionToken{
+		UserID:             userID,
+		TokenHash:          tokenHash,
+		TokenPrefix:        tokenPrefix,
+		UserAgent:          &userAgent,
+		IPAddress:          ip,
+		ExpiresAt:          time.Now().Add(30 * 24 * time.Hour), // 30 days
+		LastUsedAt:         time.Now(),
+		IsRevoked:          false,
+		JWTVersionSnapshot: user.JWTVersion,
+	}
+
+	// Save to database
+	_, err = s.sessionRepo.Create(ctx, sessionToken)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create session: %w", err)
+	}
+
+	return token, user, nil
+}
+
+// ValidateToken validates a session token and returns the associated user
+func (s *AuthService) ValidateToken(ctx context.Context, token string) (*models.User, *models.SessionToken, error) {
+	// Hash the token
+	tokenHash := s.hashToken(token)
+
+	// Get session from database
+	session, err := s.sessionRepo.GetByTokenHash(ctx, tokenHash)
+	if err != nil {
+		return nil, nil, ErrInvalidToken
+	}
+
+	// Check if session is revoked
+	if session.IsRevoked {
+		return nil, nil, ErrTokenRevoked
+	}
+
+	// Check if session is expired
+	if time.Now().After(session.ExpiresAt) {
+		return nil, nil, ErrTokenExpired
+	}
+
+	// Get user
+	user, err := s.userRepo.GetByID(ctx, session.UserID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Check if JWT version matches (global invalidation check)
+	if session.JWTVersionSnapshot != user.JWTVersion {
+		return nil, nil, ErrSessionInvalid
+	}
+
+	// Update last used timestamp (fire and forget, don't block on this)
+	go func() {
+		bgCtx := context.Background()
+		_ = s.sessionRepo.UpdateLastUsed(bgCtx, session.ID)
+	}()
+
+	return user, session, nil
+}
+
+// RevokeSession revokes a specific session token
+func (s *AuthService) RevokeSession(ctx context.Context, token string) error {
+	tokenHash := s.hashToken(token)
+	return s.sessionRepo.RevokeToken(ctx, tokenHash, models.RevocationReasonUserLogout)
+}
+
+// RevokeSessionByID revokes a session by its ID
+func (s *AuthService) RevokeSessionByID(ctx context.Context, sessionID uuid.UUID) error {
+	return s.sessionRepo.RevokeTokenByID(ctx, sessionID, models.RevocationReasonUserLogout)
+}
+
+// RevokeAllUserSessions revokes all active sessions for a user
+func (s *AuthService) RevokeAllUserSessions(ctx context.Context, userID uuid.UUID, reason string) error {
+	return s.sessionRepo.RevokeAllUserTokens(ctx, userID, reason)
+}
+
+// GetActiveSessions returns all active sessions for a user
+func (s *AuthService) GetActiveSessions(ctx context.Context, userID uuid.UUID) ([]models.SessionToken, error) {
+	return s.sessionRepo.GetActiveSessionsByUserID(ctx, userID)
+}
+
+// CompleteEmailLogin completes the email login flow after successful verification
+func (s *AuthService) CompleteEmailLogin(ctx context.Context, email, userAgent, ipAddress string) (*models.LoginResponse, error) {
+	// Create or get user
+	user, isNew, err := s.userRepo.CreateOrGetByEmail(ctx, email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get/create user: %w", err)
+	}
+
+	// Mark email as verified if it's not already
+	if err := s.userRepo.MarkEmailVerified(ctx, user.ID); err != nil {
+		return nil, fmt.Errorf("failed to mark email as verified: %w", err)
+	}
+
+	// Create session token
+	token, user, err := s.CreateSession(ctx, user.ID, userAgent, ipAddress)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create session: %w", err)
+	}
+
+	// Log for debugging
+	if isNew {
+		fmt.Printf("New user created: %s (ID: %s)\n", email, user.ID)
+	}
+
+	return &models.LoginResponse{
+		Token: token,
+		User:  user,
+	}, nil
+}
+
+// Helper functions
+
+// generateSecureToken generates a cryptographically secure random token
+func (s *AuthService) generateSecureToken(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// hashToken hashes a token using SHA-256
+func (s *AuthService) hashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
 }
