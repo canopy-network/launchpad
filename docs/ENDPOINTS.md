@@ -45,6 +45,16 @@ Complete API reference for the Launchpad blockchain creation and management plat
 - `GET /api/v1/virtual-pools` - Get trading information for all pre-graduation chains
 - `GET /api/v1/virtual-pools/{id}` - Get trading information for a specific pre-graduation chain
 
+### Graduated Pools
+
+> namespace for graduated (live blockchain) trading pairs and respective metadata
+
+- `GET /api/v1/graduated-pools` - Get a trading information for all graduated chains
+- `GET /api/v1/graduated-pools/{id}` - Get a trading information for a specific graduated chains
+- `POST /api/v1/graduated-pools/liquidity-deposit` - Deposit liquidity from a graduated chain
+- `POST /api/v1/graduated-pools/liquidity-withdrawal` - Remove liquidity from a graduated chain
+- `POST /api/v1/graduated-pools/swap` - Execute or simulate an AMM dex swap
+
 ### Wallets
 
 > namespace for encrypted keypair management
@@ -56,16 +66,6 @@ Complete API reference for the Launchpad blockchain creation and management plat
 - `DELETE /api/v1/wallets/{id}` - Delete wallet
 - `POST /api/v1/wallets/{id}/decrypt` - Decrypt wallet private key
 - `POST /api/v1/wallets/{id}/unlock` - Unlock locked wallet
-
-### Graduated Pools
-
-> namespace for graduated (live blockchain) trading pairs and respective metadata
-
-- `GET /api/v1/graduated-pools` - Get a trading information for all graduated chains
-- `GET /api/v1/graduated-pools/{id}` - Get a trading information for a specific graduated chains
-- `POST /api/v1/graduated-pools/liquidity-deposit` - Deposit liquidity from a graduated chain
-- `POST /api/v1/graduated-pools/liquidity-withdrawal` - Remove liquidity from a graduated chain
-- `POST /api/v1/graduated-pools/swap` - Execute or simulate an AMM dex swap
 
 ### Bridge 
 
