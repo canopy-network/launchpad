@@ -395,34 +395,6 @@ func (s *ChainService) DeleteChain(ctx context.Context, chainID string, userID s
 	return nil
 }
 
-// GetVirtualPool retrieves virtual pool data for a chain
-func (s *ChainService) GetVirtualPool(ctx context.Context, chainID string) (*models.VirtualPool, error) {
-	chainUUID, err := uuid.Parse(chainID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid chain ID: %w", err)
-	}
-
-	// Verify chain exists
-	_, err = s.chainRepo.GetByID(ctx, chainUUID, nil)
-	if err != nil {
-		if err.Error() == "chain not found" {
-			return nil, ErrChainNotFound
-		}
-		return nil, fmt.Errorf("failed to get chain: %w", err)
-	}
-
-	// Get virtual pool using VirtualPoolRepository
-	pool, err := s.virtualPoolRepo.GetPoolByChainID(ctx, chainUUID)
-	if err != nil {
-		if strings.Contains(err.Error(), "virtual pool not found") {
-			return nil, fmt.Errorf("virtual pool not found for chain")
-		}
-		return nil, fmt.Errorf("failed to get virtual pool: %w", err)
-	}
-
-	return pool, nil
-}
-
 // GetTransactions retrieves virtual pool transactions for a chain
 func (s *ChainService) GetTransactions(ctx context.Context, chainID string, userID, transactionType string, page, limit int) ([]models.VirtualPoolTransaction, *models.Pagination, error) {
 	chainUUID, err := uuid.Parse(chainID)

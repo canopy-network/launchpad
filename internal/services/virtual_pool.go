@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
+	"strings"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/enielson/launchpad/internal/repository/interfaces"
@@ -42,4 +44,23 @@ func (s *VirtualPoolService) GetAllPools(ctx context.Context, page, limit int) (
 	}
 
 	return pools, paginationResp, nil
+}
+
+// GetPool retrieves virtual pool data for a chain
+func (s *VirtualPoolService) GetPool(ctx context.Context, chainID string) (*models.VirtualPool, error) {
+	chainUUID, err := uuid.Parse(chainID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid chain ID: %w", err)
+	}
+
+	// Get virtual pool using VirtualPoolRepository
+	pool, err := s.virtualPoolRepo.GetPoolByChainID(ctx, chainUUID)
+	if err != nil {
+		if strings.Contains(err.Error(), "virtual pool not found") {
+			return nil, fmt.Errorf("virtual pool not found for chain")
+		}
+		return nil, fmt.Errorf("failed to get virtual pool: %w", err)
+	}
+
+	return pool, nil
 }

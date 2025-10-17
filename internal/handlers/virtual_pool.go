@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,6 +23,20 @@ func NewVirtualPoolHandler(virtualPoolService *services.VirtualPoolService, vali
 		virtualPoolService: virtualPoolService,
 		validator:          validator,
 	}
+}
+
+// GetVirtualPool handles GET /api/v1/virtual-pool/{id}
+func (h *VirtualPoolHandler) GetVirtualPool(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+
+	pool, err := h.virtualPoolService.GetPool(ctx, chainID)
+	if err != nil {
+		response.InternalServerError(w, fmt.Sprintf("Failed to retrieve virtual pool: %s", err.Error()))
+		return
+	}
+
+	response.Success(w, http.StatusOK, pool)
 }
 
 // GetVirtualPools handles GET /api/v1/virtual-pools

@@ -7,6 +7,60 @@ Complete API reference for the Launchpad blockchain creation and management plat
 **API Prefix:** `/api/v1`
 **JSON Schema:** All requests/responses are validated against JSON Schema 2020-12 (see `jsonschema.json`)
 
+## API Endpoints
+
+### Health & Status
+
+> namespace for general health / liveness
+
+- `GET /health` - Health check endpoint
+
+### Authentication
+
+> namespace for email authentication
+
+- `POST /api/v1/auth/email` - Request email authentication
+- `POST /api/v1/auth/verify` - Verify email authentication
+
+### Templates
+
+> namespace for VMless templates for smart contracts
+
+- `GET /api/v1/templates` - Get chain templates
+
+### Chains
+
+> subspace for virtual and graduated blockchain information
+
+- `GET /api/v1/chains` - Get chains list
+- `GET /api/v1/chains/{id}` - Get specific chain
+- `POST /api/v1/chains` - Create new chain
+- `DELETE /api/v1/chains/{id}` - Delete chain
+- `GET /api/v1/chains/{id}/transactions` - Get chain transactions
+
+### Virtual Pools
+
+> namespace for pre-graduation (in-database) trading pairs and respective metadata
+
+- `GET /api/v1/virtual-pools` - Get trading information for all pre-graduation chains
+- `GET /api/v1/virtual-pools/{id}` - Get trading information for a specific pre-graduation chain
+
+### Pools
+
+> namespace for graduated (live blockchain) trading pairs and respective metadata
+
+- `GET /api/v1/pools` - Get a trading information for all graduated chains
+- `GET /api/v1/pools/{id}` - Get a trading information for a specific graduated chains
+- `POST /api/v1/pools/liquidity-deposit` - Deposit liquidity from a graduated chain
+- `POST /api/v1/pools/liquidity-withdrawal` - Remove liquidity from a graduated chain
+- `POST /api/v1/pools/swap` - Execute or simulate an AMM dex swap
+
+### Bridge 
+
+> namespace for 1-way order book swapping (on-ramp to CNPY)
+
+- `POST /api/v1/bridge/swap` - Execute a 1-way-order book swap
+
 ## Table of Contents
 
 - [Authentication](#authentication)

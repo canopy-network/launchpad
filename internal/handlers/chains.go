@@ -147,20 +147,6 @@ func (h *ChainHandler) DeleteChain(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetVirtualPool handles GET /api/v1/chains/{id}/virtual-pool
-func (h *ChainHandler) GetVirtualPool(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	chainID := chi.URLParam(r, "id")
-
-	pool, err := h.chainService.GetVirtualPool(ctx, chainID)
-	if err != nil {
-		h.handleServiceError(w, err)
-		return
-	}
-
-	response.Success(w, http.StatusOK, pool)
-}
-
 // GetTransactions handles GET /api/v1/chains/{id}/transactions
 func (h *ChainHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

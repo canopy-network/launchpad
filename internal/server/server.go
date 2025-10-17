@@ -126,7 +126,12 @@ func (s *Server) setupRoutes() {
 			r.Get("/templates", s.Handlers.TemplateHandler.GetTemplates)
 
 			// Virtual pool routes
-			r.Get("/virtual-pools", s.Handlers.VirtualPoolHandler.GetVirtualPools)
+			r.Route("/virtual-pools", func(r chi.Router) {
+				r.Get("/", s.Handlers.VirtualPoolHandler.GetVirtualPools)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", s.Handlers.VirtualPoolHandler.GetVirtualPool)
+				})
+			})
 
 			// Chain routes
 			r.Route("/chains", func(r chi.Router) {
@@ -138,7 +143,6 @@ func (s *Server) setupRoutes() {
 					r.Delete("/", s.Handlers.ChainHandler.DeleteChain)
 
 					// Virtual pool endpoints
-					r.Get("/virtual-pool", s.Handlers.ChainHandler.GetVirtualPool)
 					r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
 				})
 			})
