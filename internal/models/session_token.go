@@ -1,7 +1,6 @@
 package models
 
 import (
-	"net"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,7 +13,7 @@ type SessionToken struct {
 	TokenHash          string     `json:"-" db:"token_hash"` // Never expose in JSON
 	TokenPrefix        string     `json:"token_prefix" db:"token_prefix"`
 	UserAgent          *string    `json:"user_agent" db:"user_agent"`
-	IPAddress          *net.IP    `json:"ip_address" db:"ip_address"`
+	IPAddress          *string    `json:"ip_address" db:"ip_address"`
 	DeviceName         *string    `json:"device_name" db:"device_name"`
 	ExpiresAt          time.Time  `json:"expires_at" db:"expires_at"`
 	LastUsedAt         time.Time  `json:"last_used_at" db:"last_used_at"`
@@ -84,9 +83,9 @@ func (st *SessionToken) ToSessionInfo(isCurrent bool) *SessionInfo {
 		CreatedAt:   st.CreatedAt,
 	}
 
-	// Convert IP address to string if present
+	// Copy IP address string if present
 	if st.IPAddress != nil {
-		info.IPAddress = st.IPAddress.String()
+		info.IPAddress = *st.IPAddress
 	}
 
 	return info
