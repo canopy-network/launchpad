@@ -37,6 +37,9 @@ Complete API reference for the Launchpad blockchain creation and management plat
 - `POST /api/v1/chains` - Create new chain
 - `DELETE /api/v1/chains/{id}` - Delete chain
 - `GET /api/v1/chains/{id}/transactions` - Get chain transactions
+- `GET /api/v1/chains/{id}/assets` - Get chain assets
+- `POST /api/v1/chains/{id}/assets` - Create chain asset
+- `PUT /api/v1/chains/{id}/assets/{asset_id}` - Update chain asset
 
 ### Virtual Pools
 
@@ -997,6 +1000,514 @@ curl -X DELETE http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-44665
 - Only chain creator can delete
 - Chain must be in `draft` status
 - Cannot delete launched or active chains
+
+---
+
+#### `GET /api/v1/chains/{id}/assets`
+
+**Description:** Retrieves all assets associated with a specific chain, including logos, banners, screenshots, videos, and documentation files
+
+**Authentication:** Required (X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Chain ID
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": [
+      {
+        "id": "950e8400-e29b-41d4-a716-446655440005",
+        "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+        "asset_type": "logo",
+        "file_name": "mychain-logo.png",
+        "file_url": "https://cdn.example.com/assets/mychain-logo.png",
+        "file_size_bytes": 52480,
+        "mime_type": "image/png",
+        "title": "MyChain Official Logo",
+        "description": "Official logo for MyChain project",
+        "alt_text": "MyChain circular logo with gradient",
+        "display_order": 0,
+        "is_primary": true,
+        "is_featured": true,
+        "is_active": true,
+        "moderation_status": "approved",
+        "moderation_notes": null,
+        "uploaded_by": "550e8400-e29b-41d4-a716-446655440000",
+        "created_at": "2024-01-15T10:00:00Z",
+        "updated_at": "2024-01-15T10:00:00Z"
+      },
+      {
+        "id": "950e8400-e29b-41d4-a716-446655440006",
+        "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+        "asset_type": "banner",
+        "file_name": "mychain-banner.jpg",
+        "file_url": "https://cdn.example.com/assets/mychain-banner.jpg",
+        "file_size_bytes": 125600,
+        "mime_type": "image/jpeg",
+        "title": "MyChain Banner Image",
+        "description": "Header banner for MyChain",
+        "alt_text": "MyChain banner showing DeFi ecosystem",
+        "display_order": 1,
+        "is_primary": false,
+        "is_featured": true,
+        "is_active": true,
+        "moderation_status": "approved",
+        "moderation_notes": null,
+        "uploaded_by": "550e8400-e29b-41d4-a716-446655440000",
+        "created_at": "2024-01-15T10:05:00Z",
+        "updated_at": "2024-01-15T10:05:00Z"
+      }
+    ]
+  }
+  ```
+
+- **Error (403):**
+  ```json
+  {
+    "error": {
+      "code": "FORBIDDEN",
+      "message": "Access denied"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Chain not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+curl -X GET http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Asset Response Fields:**
+- `id` - UUID identifier for the asset
+- `chain_id` - Associated chain ID
+- `asset_type` - Type of asset: `logo`, `banner`, `screenshot`, `video`, `whitepaper`, `documentation`
+- `file_name` - Original filename (max 255 chars)
+- `file_url` - URL where the asset is hosted
+- `file_size_bytes` - File size in bytes (nullable)
+- `mime_type` - MIME type (e.g., image/png, video/mp4) (nullable)
+- `title` - Display title for the asset (nullable, max 200 chars)
+- `description` - Detailed description of the asset (nullable, max 1000 chars)
+- `alt_text` - Accessibility alt text for images (nullable, max 500 chars)
+- `display_order` - Sort order for displaying assets (default: 0)
+- `is_primary` - Whether this is the primary asset of its type
+- `is_featured` - Whether this asset should be featured
+- `is_active` - Whether this asset is currently active
+- `moderation_status` - Moderation state: `pending`, `approved`, `rejected`
+- `moderation_notes` - Notes from moderation process (nullable)
+- `uploaded_by` - User ID of uploader
+- `created_at` - Upload timestamp (ISO 8601)
+- `updated_at` - Last update timestamp (ISO 8601)
+
+**Notes:**
+- Returns empty array if chain has no assets
+- Assets are ordered by `display_order` then `created_at`
+- Only chain creator can access assets for chains in draft status
+- Public chains (launched/active) assets are visible to all authenticated users
+- Asset files must be hosted externally (CDN, S3, etc.)
+- Conforms to `ChainAsset` schema in jsonschema.json
+
+---
+
+#### `POST /api/v1/chains/{id}/assets`
+
+**Description:** Creates a new asset for a chain. Assets include logos, banners, screenshots, videos, whitepapers, and documentation files.
+
+**Authentication:** Required (X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Chain ID
+
+**Request Body:**
+```json
+{
+  "asset_type": "string (required, one of: logo, banner, screenshot, video, whitepaper, documentation)",
+  "file_name": "string (required, 1-255 chars)",
+  "file_url": "string (required, valid URL)",
+  "file_size_bytes": "integer (optional, min 1)",
+  "mime_type": "string (optional, max 100 chars)",
+  "title": "string (optional, max 200 chars)",
+  "description": "string (optional, max 1000 chars)",
+  "alt_text": "string (optional, max 500 chars)",
+  "display_order": "integer (optional, min 0, default: 0)",
+  "is_primary": "boolean (optional, default: false)",
+  "is_featured": "boolean (optional, default: false)"
+}
+```
+
+**Validation Constraints (JSON Schema & Go):**
+- `asset_type`: Required, must be one of: `logo`, `banner`, `screenshot`, `video`, `whitepaper`, `documentation`
+- `file_name`: Required, 1-255 characters
+- `file_url`: Required, must be valid URL format
+- `file_size_bytes`: Optional, minimum 1 byte if provided
+- `mime_type`: Optional, maximum 100 characters
+- `title`: Optional, maximum 200 characters
+- `description`: Optional, maximum 1000 characters
+- `alt_text`: Optional, maximum 500 characters (recommended for images for accessibility)
+- `display_order`: Optional, minimum 0, defaults to 0
+- `is_primary`: Optional boolean, defaults to false
+- `is_featured`: Optional boolean, defaults to false
+
+**Response:**
+- **Success (201):**
+  ```json
+  {
+    "data": {
+      "id": "950e8400-e29b-41d4-a716-446655440005",
+      "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+      "asset_type": "logo",
+      "file_name": "mychain-logo.png",
+      "file_url": "https://cdn.example.com/assets/mychain-logo.png",
+      "file_size_bytes": 52480,
+      "mime_type": "image/png",
+      "title": "MyChain Official Logo",
+      "description": "Official logo for MyChain project",
+      "alt_text": "MyChain circular logo with gradient",
+      "display_order": 0,
+      "is_primary": true,
+      "is_featured": true,
+      "is_active": true,
+      "moderation_status": "pending",
+      "moderation_notes": null,
+      "uploaded_by": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z"
+    }
+  }
+  ```
+
+- **Error (400) - Invalid JSON:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid JSON payload",
+      "details": "unexpected end of JSON input"
+    }
+  }
+  ```
+
+- **Error (400) - Validation:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "asset_type",
+          "message": "must be one of: logo, banner, screenshot, video, whitepaper, documentation"
+        },
+        {
+          "field": "file_url",
+          "message": "must be a valid URL"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (403):**
+  ```json
+  {
+    "error": {
+      "code": "FORBIDDEN",
+      "message": "Access denied"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Chain not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+# Upload a logo
+curl -X POST http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "asset_type": "logo",
+    "file_name": "mychain-logo.png",
+    "file_url": "https://cdn.example.com/assets/mychain-logo.png",
+    "file_size_bytes": 52480,
+    "mime_type": "image/png",
+    "title": "MyChain Official Logo",
+    "description": "Official logo for MyChain project",
+    "alt_text": "MyChain circular logo with gradient",
+    "is_primary": true,
+    "is_featured": true
+  }'
+
+# Upload a whitepaper
+curl -X POST http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "asset_type": "whitepaper",
+    "file_name": "mychain-whitepaper.pdf",
+    "file_url": "https://docs.example.com/mychain-whitepaper.pdf",
+    "file_size_bytes": 2048000,
+    "mime_type": "application/pdf",
+    "title": "MyChain Technical Whitepaper",
+    "description": "Comprehensive technical documentation and tokenomics"
+  }'
+
+# Upload a video
+curl -X POST http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "asset_type": "video",
+    "file_name": "mychain-demo.mp4",
+    "file_url": "https://video.example.com/mychain-demo.mp4",
+    "mime_type": "video/mp4",
+    "title": "MyChain Product Demo",
+    "description": "5-minute demo showcasing MyChain features"
+  }'
+```
+
+**Notes:**
+- Only chain creator can add assets
+- Asset files must be uploaded to external storage (CDN, S3, etc.) before creating the asset record
+- This endpoint only stores metadata and URL references, not the actual files
+- New assets start with `moderation_status: "pending"` by default
+- `uploaded_by` is automatically set to the authenticated user ID
+- `is_active` defaults to true for new assets
+- Asset type determines how the asset is displayed in the UI
+- Multiple assets of the same type can exist (e.g., multiple screenshots)
+- Use `is_primary` to designate the main asset of each type
+- File URL should use HTTPS for security
+- Consider setting appropriate MIME types for proper browser handling
+- Conforms to `CreateChainAssetRequest` schema in jsonschema.json
+
+---
+
+#### `PUT /api/v1/chains/{id}/assets/{asset_id}`
+
+**Description:** Updates an existing chain asset. All fields are optional to support partial updates.
+
+**Authentication:** Required (X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Chain ID
+  - `asset_id` (UUID) - Asset ID
+
+**Request Body:**
+```json
+{
+  "file_name": "string (optional, 1-255 chars)",
+  "file_url": "string (optional, valid URL)",
+  "file_size_bytes": "integer (optional, min 1)",
+  "mime_type": "string (optional, max 100 chars)",
+  "title": "string (optional, max 200 chars)",
+  "description": "string (optional, max 1000 chars)",
+  "alt_text": "string (optional, max 500 chars)",
+  "display_order": "integer (optional, min 0)",
+  "is_primary": "boolean (optional)",
+  "is_featured": "boolean (optional)",
+  "is_active": "boolean (optional)",
+  "moderation_status": "string (optional, one of: pending, approved, rejected)",
+  "moderation_notes": "string (optional, max 1000 chars)"
+}
+```
+
+**Validation Constraints (JSON Schema & Go):**
+- `file_name`: Optional, 1-255 characters if provided
+- `file_url`: Optional, must be valid URL format if provided
+- `file_size_bytes`: Optional, minimum 1 byte if provided
+- `mime_type`: Optional, maximum 100 characters
+- `title`: Optional, maximum 200 characters
+- `description`: Optional, maximum 1000 characters
+- `alt_text`: Optional, maximum 500 characters
+- `display_order`: Optional, minimum 0
+- `is_primary`: Optional boolean
+- `is_featured`: Optional boolean
+- `is_active`: Optional boolean
+- `moderation_status`: Optional, must be one of: `pending`, `approved`, `rejected`
+- `moderation_notes`: Optional, maximum 1000 characters
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "id": "950e8400-e29b-41d4-a716-446655440005",
+      "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+      "asset_type": "logo",
+      "file_name": "mychain-logo-updated.png",
+      "file_url": "https://cdn.example.com/assets/mychain-logo-updated.png",
+      "file_size_bytes": 48320,
+      "mime_type": "image/png",
+      "title": "MyChain Official Logo (Updated)",
+      "description": "Updated official logo for MyChain project",
+      "alt_text": "MyChain circular logo with new gradient",
+      "display_order": 0,
+      "is_primary": true,
+      "is_featured": true,
+      "is_active": true,
+      "moderation_status": "approved",
+      "moderation_notes": "Approved after review",
+      "uploaded_by": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T12:30:00Z"
+    }
+  }
+  ```
+
+- **Error (400) - Invalid JSON:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid JSON payload",
+      "details": "unexpected end of JSON input"
+    }
+  }
+  ```
+
+- **Error (400) - Validation:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "file_url",
+          "message": "must be a valid URL"
+        },
+        {
+          "field": "moderation_status",
+          "message": "must be one of: pending, approved, rejected"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (403):**
+  ```json
+  {
+    "error": {
+      "code": "FORBIDDEN",
+      "message": "Access denied"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Asset not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+# Update asset title and description
+curl -X PUT http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets/950e8400-e29b-41d4-a716-446655440005 \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "title": "MyChain Official Logo (Updated)",
+    "description": "Updated official logo for MyChain project"
+  }'
+
+# Replace asset file (new version)
+curl -X PUT http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets/950e8400-e29b-41d4-a716-446655440005 \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "file_name": "mychain-logo-v2.png",
+    "file_url": "https://cdn.example.com/assets/mychain-logo-v2.png",
+    "file_size_bytes": 48320
+  }'
+
+# Deactivate asset
+curl -X PUT http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets/950e8400-e29b-41d4-a716-446655440005 \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "is_active": false
+  }'
+
+# Approve asset (moderation)
+curl -X PUT http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-446655440001/assets/950e8400-e29b-41d4-a716-446655440005 \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "moderation_status": "approved",
+    "moderation_notes": "Approved after review"
+  }'
+```
+
+**Notes:**
+- Only chain creator can update assets
+- All fields are optional; only provided fields will be updated
+- `asset_type` cannot be changed after creation
+- Use this endpoint to replace asset files by updating `file_url` and related fields
+- Setting `is_active` to false hides the asset without deleting it
+- `moderation_status` can be updated by authorized moderators
+- The `updated_at` timestamp is automatically updated
+- Returns the complete updated asset object
+- To delete an asset, set `is_active: false` (soft delete)
+- `uploaded_by` field cannot be modified
+- Conforms to `UpdateChainAssetRequest` schema in jsonschema.json
 
 ---
 
