@@ -114,7 +114,14 @@ func (h *AuthHandler) VerifyEmailCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Success(w, http.StatusOK, loginResponse)
+	// Set Authorization header with Bearer token
+	w.Header().Set("Authorization", "Bearer "+loginResponse.Token)
+
+	// Return user information in response body (without exposing token)
+	response.Success(w, http.StatusOK, map[string]interface{}{
+		"user":    loginResponse.User,
+		"message": "Email verified successfully",
+	})
 }
 
 // Logout handles POST /api/v1/auth/logout
