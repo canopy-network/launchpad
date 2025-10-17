@@ -255,7 +255,6 @@ func (s *AuthService) CompleteEmailLogin(ctx context.Context, email, userAgent, 
 		return nil, fmt.Errorf("failed to mark email as verified: %w", err)
 	}
 
-	fmt.Println(email, userAgent, ipAddress)
 	// Create session token
 	token, user, err := s.CreateSession(ctx, user.ID, userAgent, ipAddress)
 	if err != nil {
