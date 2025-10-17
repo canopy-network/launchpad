@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/enielson/launchpad/internal/services"
@@ -94,7 +95,7 @@ func (h *AuthHandler) VerifyEmailCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user agent and IP address for session tracking
-	userAgent := r.Header.Get("User-Agent")
+	userAgent := sanitizeString(r.Header.Get("User-Agent"))
 	ipAddress := r.RemoteAddr
 	// Strip port from IP address
 	if colonIdx := len(ipAddress) - 1; colonIdx > 0 {
@@ -266,4 +267,9 @@ func extractTokenFromHeader(r *http.Request) string {
 	}
 
 	return ""
+}
+
+// sanitizeString removes null bytes (0x00) from strings to prevent PostgreSQL UTF8 encoding errors
+func sanitizeString(s string) string {
+	return strings.ReplaceAll(s, "\x00", "")
 }
