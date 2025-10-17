@@ -45,6 +45,18 @@ Complete API reference for the Launchpad blockchain creation and management plat
 - `GET /api/v1/virtual-pools` - Get trading information for all pre-graduation chains
 - `GET /api/v1/virtual-pools/{id}` - Get trading information for a specific pre-graduation chain
 
+### Wallets
+
+> namespace for encrypted keypair management
+
+- `GET /api/v1/wallets` - Get list of wallets with filtering
+- `POST /api/v1/wallets` - Create new encrypted wallet
+- `GET /api/v1/wallets/{id}` - Get specific wallet details
+- `PUT /api/v1/wallets/{id}` - Update wallet metadata
+- `DELETE /api/v1/wallets/{id}` - Delete wallet
+- `POST /api/v1/wallets/{id}/decrypt` - Decrypt wallet private key
+- `POST /api/v1/wallets/{id}/unlock` - Unlock locked wallet
+
 ### Pools
 
 > namespace for graduated (live blockchain) trading pairs and respective metadata
@@ -74,6 +86,7 @@ Complete API reference for the Launchpad blockchain creation and management plat
   - [Templates](#templates)
   - [Chains](#chains)
   - [Virtual Pools](#virtual-pools)
+  - [Wallets](#wallets)
 
 ---
 
@@ -1207,6 +1220,766 @@ curl -X GET "http://localhost:3001/api/v1/chains/650e8400-e29b-41d4-a716-4466554
 - Filter by user_id to see a specific user's trades
 - Transactions ordered by most recent first
 - Includes pool state snapshot after each transaction
+
+---
+
+### Wallets
+
+#### `GET /api/v1/wallets`
+
+**Description:** Retrieves a paginated list of wallets with optional filtering by user, chain, lock status, and active status
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Parameters:**
+- **Query Parameters:**
+  - `user_id` (string, optional) - Filter by user ID (UUID format)
+  - `chain_id` (string, optional) - Filter by chain ID (UUID format)
+  - `created_by` (string, optional) - Filter by creator user ID (UUID format)
+  - `is_active` (boolean, optional) - Filter by active status (true/false)
+  - `is_locked` (boolean, optional) - Filter by lock status (true/false)
+  - `page` (integer, optional) - Page number
+    - Default: 1
+    - Min: 1
+  - `limit` (integer, optional) - Items per page
+    - Default: 20
+    - Min: 1
+    - Max: 100
+
+**Validation Constraints:**
+- `user_id`: Optional, must be valid UUID format
+- `chain_id`: Optional, must be valid UUID format
+- `created_by`: Optional, must be valid UUID format
+- `is_active`: Optional boolean
+- `is_locked`: Optional boolean
+- `page`: Optional integer, minimum 1
+- `limit`: Optional integer, minimum 1, maximum 100
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": [
+      {
+        "id": "850e8400-e29b-41d4-a716-446655440001",
+        "user_id": "550e8400-e29b-41d4-a716-446655440000",
+        "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+        "address": "0x1234567890abcdef1234567890abcdef12345678",
+        "public_key": "04abcdef...",
+        "wallet_name": "My Main Wallet",
+        "wallet_description": "Primary trading wallet for DeFi operations",
+        "is_active": true,
+        "is_locked": false,
+        "last_used_at": "2024-01-15T14:30:00Z",
+        "password_changed_at": "2024-01-10T10:00:00Z",
+        "locked_until": null,
+        "created_by": "550e8400-e29b-41d4-a716-446655440000",
+        "created_at": "2024-01-10T10:00:00Z",
+        "updated_at": "2024-01-15T14:30:00Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 5,
+      "pages": 1
+    }
+  }
+  ```
+
+- **Error (400) - Invalid UUID:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid user_id format"
+    }
+  }
+  ```
+
+- **Error (400) - Validation:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "limit",
+          "message": "must be between 1 and 100"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to retrieve wallets"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+# Get all wallets with default pagination
+curl -X GET "http://localhost:3001/api/v1/wallets" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+
+# Filter by user and active status
+curl -X GET "http://localhost:3001/api/v1/wallets?user_id=550e8400-e29b-41d4-a716-446655440000&is_active=true&page=1&limit=10" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+
+# Filter by chain
+curl -X GET "http://localhost:3001/api/v1/wallets?chain_id=650e8400-e29b-41d4-a716-446655440001" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+
+# Find locked wallets
+curl -X GET "http://localhost:3001/api/v1/wallets?is_locked=true" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Wallet Response Fields:**
+- `id` - UUID identifier for the wallet
+- `user_id` - Associated user ID (nullable)
+- `chain_id` - Associated chain ID (nullable)
+- `address` - Blockchain wallet address derived from public key
+- `public_key` - Public key in hex format
+- `wallet_name` - Human-readable wallet name (nullable)
+- `wallet_description` - Wallet description or notes (nullable)
+- `is_active` - Whether wallet is currently active
+- `is_locked` - Whether wallet is locked due to failed decrypt attempts
+- `last_used_at` - Timestamp of last wallet usage (nullable)
+- `password_changed_at` - Timestamp of last password change (nullable)
+- `locked_until` - Timestamp when wallet will automatically unlock (nullable)
+- `created_by` - User ID of wallet creator (nullable)
+- `created_at` - Wallet creation timestamp
+- `updated_at` - Last update timestamp
+
+**Notes:**
+- Encrypted private key, salt, and failed_decrypt_attempts are never exposed in API responses
+- Wallets can be associated with a user, a chain, both, or neither
+- Multiple filters can be combined for precise queries
+- `locked_until` indicates temporary lock duration; null means unlocked or permanently locked
+- Ordered by most recently updated first
+- Returns empty array if no wallets match the filters
+
+---
+
+#### `POST /api/v1/wallets`
+
+**Description:** Creates a new encrypted wallet with a generated keypair. The private key is encrypted using the provided password.
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Body:**
+```json
+{
+  "password": "string (required, min 8 characters)",
+  "user_id": "UUID string (optional)",
+  "chain_id": "UUID string (optional)",
+  "wallet_name": "string (optional, 1-100 chars)",
+  "wallet_description": "string (optional, max 500 chars)"
+}
+```
+
+**Validation Constraints:**
+- `password`: Required, minimum 8 characters
+- `user_id`: Optional, must be valid UUID format if provided
+- `chain_id`: Optional, must be valid UUID format if provided
+- `wallet_name`: Optional, 1-100 characters if provided
+- `wallet_description`: Optional, maximum 500 characters if provided
+
+**Response:**
+- **Success (201):**
+  ```json
+  {
+    "data": {
+      "id": "850e8400-e29b-41d4-a716-446655440001",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "public_key": "04abcdef...",
+      "wallet_name": "My Main Wallet",
+      "wallet_description": "Primary trading wallet",
+      "is_active": true,
+      "is_locked": false,
+      "last_used_at": null,
+      "password_changed_at": "2024-01-15T10:00:00Z",
+      "locked_until": null,
+      "created_by": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z"
+    }
+  }
+  ```
+
+- **Error (400) - Invalid JSON:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid JSON payload"
+    }
+  }
+  ```
+
+- **Error (400) - Validation:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "password",
+          "message": "must be at least 8 characters"
+        },
+        {
+          "field": "user_id",
+          "message": "must be a valid UUID"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (401):**
+  ```json
+  {
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "Authentication required"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to create wallet"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+# Create wallet for a user
+curl -X POST http://localhost:3001/api/v1/wallets \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "password": "SecurePass123!",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "wallet_name": "My Main Wallet",
+    "wallet_description": "Primary trading wallet for DeFi operations"
+  }'
+
+# Create wallet for a chain
+curl -X POST http://localhost:3001/api/v1/wallets \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "password": "ChainWallet123!",
+    "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+    "wallet_name": "Chain Validator Wallet"
+  }'
+
+# Create standalone wallet
+curl -X POST http://localhost:3001/api/v1/wallets \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "password": "StandalonePass123!"
+  }'
+```
+
+**Notes:**
+- A new Ed25519 keypair is automatically generated
+- Private key is encrypted using PBKDF2 with user's password and a random salt
+- Public key and address are derived from the generated keypair
+- The encrypted private key and salt are stored but never returned in API responses
+- `created_by` is automatically set to the authenticated user
+- Wallet starts in active, unlocked state
+- Password must be stored securely by the client; it cannot be recovered
+- At least 8 character password recommended for security
+
+---
+
+#### `GET /api/v1/wallets/{id}`
+
+**Description:** Retrieves details for a specific wallet by ID
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Wallet ID
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "id": "850e8400-e29b-41d4-a716-446655440001",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "public_key": "04abcdef...",
+      "wallet_name": "My Main Wallet",
+      "wallet_description": "Primary trading wallet",
+      "is_active": true,
+      "is_locked": false,
+      "last_used_at": "2024-01-15T14:30:00Z",
+      "password_changed_at": "2024-01-10T10:00:00Z",
+      "locked_until": null,
+      "created_by": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2024-01-10T10:00:00Z",
+      "updated_at": "2024-01-15T14:30:00Z"
+    }
+  }
+  ```
+
+- **Error (400):**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid wallet ID"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Wallet not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to retrieve wallet"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+curl -X GET http://localhost:3001/api/v1/wallets/850e8400-e29b-41d4-a716-446655440001 \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Notes:**
+- Wallet ID must be a valid UUID
+- Encrypted private key is never exposed in the response
+- Use `POST /api/v1/wallets/{id}/decrypt` to retrieve the decrypted private key
+
+---
+
+#### `PUT /api/v1/wallets/{id}`
+
+**Description:** Updates wallet metadata (name, description, active status). Does not modify cryptographic keys or password.
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Wallet ID
+
+**Request Body:**
+```json
+{
+  "wallet_name": "string (optional, 1-100 chars)",
+  "wallet_description": "string (optional, max 500 chars)",
+  "is_active": "boolean (optional)"
+}
+```
+
+**Validation Constraints:**
+- `wallet_name`: Optional, 1-100 characters if provided
+- `wallet_description`: Optional, maximum 500 characters if provided
+- `is_active`: Optional boolean
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "id": "850e8400-e29b-41d4-a716-446655440001",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "public_key": "04abcdef...",
+      "wallet_name": "Updated Wallet Name",
+      "wallet_description": "Updated description",
+      "is_active": false,
+      "is_locked": false,
+      "last_used_at": "2024-01-15T14:30:00Z",
+      "password_changed_at": "2024-01-10T10:00:00Z",
+      "locked_until": null,
+      "created_by": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2024-01-10T10:00:00Z",
+      "updated_at": "2024-01-15T15:00:00Z"
+    }
+  }
+  ```
+
+- **Error (400) - Invalid JSON:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid JSON payload"
+    }
+  }
+  ```
+
+- **Error (400) - Validation:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "wallet_name",
+          "message": "must be between 1 and 100 characters"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Wallet not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to update wallet"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+# Update wallet name and description
+curl -X PUT http://localhost:3001/api/v1/wallets/850e8400-e29b-41d4-a716-446655440001 \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "wallet_name": "Updated Main Wallet",
+    "wallet_description": "Updated description for my primary wallet"
+  }'
+
+# Deactivate wallet
+curl -X PUT http://localhost:3001/api/v1/wallets/850e8400-e29b-41d4-a716-446655440001 \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "is_active": false
+  }'
+```
+
+**Notes:**
+- All fields are optional; only provided fields will be updated
+- Does not modify cryptographic keys, password, or user/chain associations
+- Setting `is_active` to false prevents wallet from being used but retains data
+- Returns the complete updated wallet object
+- The `updated_at` timestamp is automatically updated
+
+---
+
+#### `DELETE /api/v1/wallets/{id}`
+
+**Description:** Permanently deletes a wallet and its encrypted private key. This operation cannot be undone.
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Wallet ID
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "message": "Wallet deleted successfully"
+    }
+  }
+  ```
+
+- **Error (400):**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid wallet ID"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Wallet not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to delete wallet"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+curl -X DELETE http://localhost:3001/api/v1/wallets/850e8400-e29b-41d4-a716-446655440001 \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Notes:**
+- **DANGER**: This operation permanently deletes the wallet and encrypted private key
+- Deletion cannot be undone; ensure you have backed up the private key if needed
+- Recommend decrypting and exporting private key before deletion
+- Associated transactions and history are retained but wallet cannot be restored
+
+---
+
+#### `POST /api/v1/wallets/{id}/decrypt`
+
+**Description:** Decrypts the wallet's private key using the provided password. Returns the decrypted private key for immediate use. Failed attempts increment the failure counter and may lock the wallet.
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Wallet ID
+
+**Request Body:**
+```json
+{
+  "password": "string (required)"
+}
+```
+
+**Validation Constraints:**
+- `password`: Required string
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "id": "850e8400-e29b-41d4-a716-446655440001",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "chain_id": "650e8400-e29b-41d4-a716-446655440001",
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "public_key": "04abcdef...",
+      "private_key": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "wallet_name": "My Main Wallet",
+      "wallet_description": "Primary trading wallet",
+      "is_active": true,
+      "is_locked": false,
+      "last_used_at": "2024-01-15T15:30:00Z",
+      "password_changed_at": "2024-01-10T10:00:00Z",
+      "locked_until": null,
+      "created_by": "550e8400-e29b-41d4-a716-446655440000",
+      "created_at": "2024-01-10T10:00:00Z",
+      "updated_at": "2024-01-15T15:30:00Z"
+    }
+  }
+  ```
+
+- **Error (400) - Invalid JSON:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid JSON payload"
+    }
+  }
+  ```
+
+- **Error (400) - Validation:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "password",
+          "message": "is required"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (401) - Wrong Password:**
+  ```json
+  {
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "Invalid password"
+    }
+  }
+  ```
+
+- **Error (403) - Wallet Locked:**
+  ```json
+  {
+    "error": {
+      "code": "FORBIDDEN",
+      "message": "Wallet is locked due to too many failed attempts"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Wallet not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to decrypt wallet"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:3001/api/v1/wallets/850e8400-e29b-41d4-a716-446655440001/decrypt \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "password": "SecurePass123!"
+  }'
+```
+
+**Security Notes:**
+- **CRITICAL**: The decrypted private key is returned in the response - handle with extreme care
+- Private key should only be used immediately and never logged or stored
+- Failed decrypt attempts are tracked; excessive failures lock the wallet
+- Wallet may lock after multiple consecutive failed attempts (security feature)
+- Use TLS/HTTPS in production to protect private key in transit
+- Consider implementing rate limiting on this endpoint
+- `last_used_at` timestamp is updated on successful decryption
+- Clear private key from memory immediately after use in client applications
+
+**Lock Behavior:**
+- Failed attempts increment `failed_decrypt_attempts` counter
+- After threshold (typically 5 attempts), wallet becomes locked
+- Locked wallet sets `is_locked` to true and may set `locked_until` timestamp
+- Use `POST /api/v1/wallets/{id}/unlock` to manually unlock
+
+---
+
+#### `POST /api/v1/wallets/{id}/unlock`
+
+**Description:** Manually unlocks a wallet that was locked due to too many failed decrypt attempts. Resets the failed attempt counter.
+
+**Authentication:** Required (Session token or X-User-ID header)
+
+**Request Parameters:**
+- **Path Parameters:**
+  - `id` (UUID) - Wallet ID
+
+**Request Body:** None
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "message": "Wallet unlocked successfully"
+    }
+  }
+  ```
+
+- **Error (400):**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "Invalid wallet ID"
+    }
+  }
+  ```
+
+- **Error (404):**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "Wallet not found"
+    }
+  }
+  ```
+
+- **Error (500):**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to unlock wallet"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:3001/api/v1/wallets/850e8400-e29b-41d4-a716-446655440001/unlock \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Notes:**
+- Resets `is_locked` to false
+- Clears `locked_until` timestamp
+- Resets `failed_decrypt_attempts` counter to 0
+- Only the wallet owner or admin should have access to this operation
+- Consider additional verification (e.g., email confirmation) before unlocking in production
+- Does not require password verification (intentional for account recovery)
 
 ---
 
