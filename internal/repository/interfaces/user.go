@@ -53,4 +53,4 @@ type UserFilters struct {
 type UserPositionWithAddress struct {
 	WalletAddress string
 	TokenBalance  int64
-}g
+}
