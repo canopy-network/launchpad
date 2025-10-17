@@ -15,20 +15,20 @@ import (
 )
 
 var (
-	ErrInvalidOrder          = errors.New("invalid order")
-	ErrPoolNotFound          = errors.New("virtual pool not found")
-	ErrInsufficientReserves  = errors.New("insufficient reserves in pool")
-	ErrInsufficientBalance   = errors.New("insufficient user balance")
-	ErrInvalidOrderType      = errors.New("invalid order type")
-	ErrZeroAmount            = errors.New("order amount must be greater than zero")
-	ErrUserNotFound          = errors.New("user not found")
+	ErrInvalidOrder         = errors.New("invalid order")
+	ErrPoolNotFound         = errors.New("virtual pool not found")
+	ErrInsufficientReserves = errors.New("insufficient reserves in pool")
+	ErrInsufficientBalance  = errors.New("insufficient user balance")
+	ErrInvalidOrderType     = errors.New("invalid order type")
+	ErrZeroAmount           = errors.New("order amount must be greater than zero")
+	ErrUserNotFound         = errors.New("user not found")
 )
 
 // OrderProcessor handles processing of orders from Canopy OrderBook
 type OrderProcessor struct {
-	poolRepo  interfaces.VirtualPoolRepository
-	userRepo  interfaces.UserRepository
-	curve     *bondingcurve.BondingCurve
+	poolRepo interfaces.VirtualPoolRepository
+	userRepo interfaces.UserRepository
+	curve    *bondingcurve.BondingCurve
 }
 
 // NewOrderProcessor creates a new order processor service

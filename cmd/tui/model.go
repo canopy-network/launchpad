@@ -273,7 +273,7 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		m.prepareRequestBuilder(),
 		m.fetchBackgroundData(), // Initial fetch
-		tickCmd(),                // Start periodic updates
+		tickCmd(),               // Start periodic updates
 	)
 }
 

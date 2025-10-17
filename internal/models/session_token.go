@@ -34,17 +34,17 @@ type LoginResponse struct {
 
 // SessionInfo represents session information for display
 type SessionInfo struct {
-	ID           uuid.UUID  `json:"id"`
-	TokenPrefix  string     `json:"token_prefix"`
-	UserAgent    *string    `json:"user_agent"`
-	IPAddress    string     `json:"ip_address,omitempty"`
-	DeviceName   *string    `json:"device_name"`
-	ExpiresAt    time.Time  `json:"expires_at"`
-	LastUsedAt   time.Time  `json:"last_used_at"`
-	IsRevoked    bool       `json:"is_revoked"`
-	RevokedAt    *time.Time `json:"revoked_at"`
-	IsCurrent    bool       `json:"is_current"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	TokenPrefix string     `json:"token_prefix"`
+	UserAgent   *string    `json:"user_agent"`
+	IPAddress   string     `json:"ip_address,omitempty"`
+	DeviceName  *string    `json:"device_name"`
+	ExpiresAt   time.Time  `json:"expires_at"`
+	LastUsedAt  time.Time  `json:"last_used_at"`
+	IsRevoked   bool       `json:"is_revoked"`
+	RevokedAt   *time.Time `json:"revoked_at"`
+	IsCurrent   bool       `json:"is_current"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 // Revocation reason constants

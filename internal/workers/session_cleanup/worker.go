@@ -11,10 +11,10 @@ import (
 
 // Worker handles periodic cleanup of expired session tokens
 type Worker struct {
-	sessionRepo    interfaces.SessionTokenRepository
-	interval       time.Duration
-	retentionDays  int
-	stopChan       chan struct{}
+	sessionRepo   interfaces.SessionTokenRepository
+	interval      time.Duration
+	retentionDays int
+	stopChan      chan struct{}
 	done          chan struct{}
 }
 

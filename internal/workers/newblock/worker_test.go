@@ -503,20 +503,20 @@ func buildTxResultWithNilMessage(recipientAddress []byte, senderAddress []byte) 
 // buildChain creates a test chain with specified parameters
 func buildChain(chainID uuid.UUID, chainName string, creatorID uuid.UUID) *models.Chain {
 	return &models.Chain{
-		ID:                   chainID,
-		ChainName:            chainName,
-		TokenSymbol:          "TEST",
-		ConsensusMechanism:   "PoS",
-		TokenTotalSupply:     1000000000,
-		GraduationThreshold:  100000.0,
-		CreationFeeCNPY:      10.0,
-		InitialCNPYReserve:   30.0,
-		InitialTokenSupply:   800000000,
-		BondingCurveSlope:    0.5,
-		Status:               models.ChainStatusVirtualActive,
-		IsGraduated:          false,
-		CreatedBy:            creatorID,
-		ValidatorMinStake:    1000.0,
+		ID:                  chainID,
+		ChainName:           chainName,
+		TokenSymbol:         "TEST",
+		ConsensusMechanism:  "PoS",
+		TokenTotalSupply:    1000000000,
+		GraduationThreshold: 100000.0,
+		CreationFeeCNPY:     10.0,
+		InitialCNPYReserve:  30.0,
+		InitialTokenSupply:  800000000,
+		BondingCurveSlope:   0.5,
+		Status:              models.ChainStatusVirtualActive,
+		IsGraduated:         false,
+		CreatedBy:           creatorID,
+		ValidatorMinStake:   1000.0,
 	}
 }
 
@@ -550,14 +550,14 @@ func TestWorker_processTransaction(t *testing.T) {
 	senderAddress := []byte{0x05, 0x06, 0x07, 0x08}
 
 	tests := []struct {
-		name           string
-		txResult       *lib.TxResult
-		index          int
-		total          int
-		height         uint64
-		setupMocks     func(chainRepo *MockChainRepository, poolRepo *MockVirtualPoolRepository, userRepo *MockUserRepository)
-		expectedLogs   []string // Expected log patterns (for manual verification)
-		activeForm     string
+		name         string
+		txResult     *lib.TxResult
+		index        int
+		total        int
+		height       uint64
+		setupMocks   func(chainRepo *MockChainRepository, poolRepo *MockVirtualPoolRepository, userRepo *MockUserRepository)
+		expectedLogs []string // Expected log patterns (for manual verification)
+		activeForm   string
 	}{
 		{
 			name:     "successful transaction processing with valid send",

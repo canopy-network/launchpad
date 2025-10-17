@@ -79,9 +79,9 @@ func TestOrderProcessorTx_ValidateOrder(t *testing.T) {
 
 	t.Run("valid buy order", func(t *testing.T) {
 		order := &lib.SellOrder{
-			AmountForSale:        1000,
-			RequestedAmount:      80000,
-			BuyerReceiveAddress:  []byte(uuid.New().String()),
+			AmountForSale:       1000,
+			RequestedAmount:     80000,
+			BuyerReceiveAddress: []byte(uuid.New().String()),
 		}
 		err := processor.validateOrder(order)
 		assert.NoError(t, err)
@@ -411,9 +411,9 @@ func TestNoDataRaces(t *testing.T) {
 
 			// Validation is thread-safe
 			order := &lib.SellOrder{
-				AmountForSale:        100,
-				RequestedAmount:      8000,
-				BuyerReceiveAddress:  []byte(uuid.New().String()),
+				AmountForSale:       100,
+				RequestedAmount:     8000,
+				BuyerReceiveAddress: []byte(uuid.New().String()),
 			}
 
 			_ = order

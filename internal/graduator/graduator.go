@@ -51,12 +51,12 @@ type GenesisData struct {
 
 // GraduationRPCPayload represents the data sent to the graduation RPC endpoint
 type GraduationRPCPayload struct {
-	Username    string            `json:"username"`
-	ChainName   string            `json:"chain_name"`
-	WalletOwner string            `json:"wallet_owner"`
-	GenesisFile string            `json:"genesis_file"`
+	Username    string                 `json:"username"`
+	ChainName   string                 `json:"chain_name"`
+	WalletOwner string                 `json:"wallet_owner"`
+	GenesisFile string                 `json:"genesis_file"`
 	Tokenomics  map[string]interface{} `json:"tokenomics"`
-	GithubRepo  string            `json:"github_repo"`
+	GithubRepo  string                 `json:"github_repo"`
 }
 
 // MakeGraduationRPCCall sends graduation data to the configured RPC endpoint
@@ -71,10 +71,10 @@ func (g *Graduator) MakeGraduationRPCCall(ctx context.Context, chain *models.Cha
 
 	// Prepare tokenomics data
 	tokenomics := map[string]interface{}{
-		"token_name":         chain.TokenName,
-		"token_symbol":       chain.TokenSymbol,
-		"token_total_supply": chain.TokenTotalSupply,
-		"block_time_seconds": chain.BlockTimeSeconds,
+		"token_name":          chain.TokenName,
+		"token_symbol":        chain.TokenSymbol,
+		"token_total_supply":  chain.TokenTotalSupply,
+		"block_time_seconds":  chain.BlockTimeSeconds,
 		"block_reward_amount": chain.BlockRewardAmount,
 	}
 

@@ -228,9 +228,9 @@ func TestValidateOrder(t *testing.T) {
 
 	t.Run("valid buy order", func(t *testing.T) {
 		order := &lib.SellOrder{
-			AmountForSale:        1000,
-			RequestedAmount:      80000,
-			BuyerReceiveAddress:  []byte(uuid.New().String()),
+			AmountForSale:       1000,
+			RequestedAmount:     80000,
+			BuyerReceiveAddress: []byte(uuid.New().String()),
 		}
 		err := processor.validateOrder(order)
 		assert.NoError(t, err)
@@ -271,12 +271,12 @@ func TestProcessBuyOrder(t *testing.T) {
 	poolID := uuid.New()
 
 	pool := &models.VirtualPool{
-		ID:           poolID,
-		ChainID:      chainID,
-		CNPYReserve:  10000.0,
-		TokenReserve: 800000000,
-		CurrentPriceCNPY: 0.0000125,
-		TotalVolumeCNPY: 5000.0,
+		ID:                poolID,
+		ChainID:           chainID,
+		CNPYReserve:       10000.0,
+		TokenReserve:      800000000,
+		CurrentPriceCNPY:  0.0000125,
+		TotalVolumeCNPY:   5000.0,
 		TotalTransactions: 10,
 	}
 
@@ -342,12 +342,12 @@ func TestProcessSellOrder(t *testing.T) {
 	poolID := uuid.New()
 
 	pool := &models.VirtualPool{
-		ID:           poolID,
-		ChainID:      chainID,
-		CNPYReserve:  10000.0,
-		TokenReserve: 800000000,
-		CurrentPriceCNPY: 0.0000125,
-		TotalVolumeCNPY: 5000.0,
+		ID:                poolID,
+		ChainID:           chainID,
+		CNPYReserve:       10000.0,
+		TokenReserve:      800000000,
+		CurrentPriceCNPY:  0.0000125,
+		TotalVolumeCNPY:   5000.0,
 		TotalTransactions: 10,
 	}
 

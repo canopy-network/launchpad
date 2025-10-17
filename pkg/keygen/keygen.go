@@ -19,10 +19,10 @@ type KeyPair struct {
 
 // EncryptedKeyPair represents an encrypted form of a private key
 type EncryptedKeyPair struct {
-	PublicKey            string `json:"publicKey"`
-	EncryptedPrivateKey  string `json:"encryptedPrivateKey"`
-	Salt                 string `json:"salt"`
-	Address              string `json:"address"`
+	PublicKey           string `json:"publicKey"`
+	EncryptedPrivateKey string `json:"encryptedPrivateKey"`
+	Salt                string `json:"salt"`
+	Address             string `json:"address"`
 }
 
 // GenerateKeyPair creates a new BLS12-381 key pair for blockchain use

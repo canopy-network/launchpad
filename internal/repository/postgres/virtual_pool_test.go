@@ -78,11 +78,11 @@ func TestUpdatePoolState(t *testing.T) {
 		uniqueTraders := 7
 
 		update := &interfaces.PoolStateUpdate{
-			CNPYReserve:        newReserve,
-			TokenReserve:       newTokenReserve,
-			CurrentPriceCNPY:   newPrice,
-			TotalTransactions:  &totalTx,
-			UniqueTraders:      &uniqueTraders,
+			CNPYReserve:       newReserve,
+			TokenReserve:      newTokenReserve,
+			CurrentPriceCNPY:  newPrice,
+			TotalTransactions: &totalTx,
+			UniqueTraders:     &uniqueTraders,
 		}
 
 		mock.ExpectExec("UPDATE virtual_pools SET").

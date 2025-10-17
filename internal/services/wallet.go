@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	MaxFailedAttempts = 5
+	MaxFailedAttempts   = 5
 	LockDurationMinutes = 15
 )
 
 var (
-	ErrWalletLocked        = fmt.Errorf("wallet is locked due to too many failed attempts")
-	ErrInvalidPassword     = fmt.Errorf("invalid password")
-	ErrWalletNotFound      = fmt.Errorf("wallet not found")
+	ErrWalletLocked    = fmt.Errorf("wallet is locked due to too many failed attempts")
+	ErrInvalidPassword = fmt.Errorf("invalid password")
+	ErrWalletNotFound  = fmt.Errorf("wallet not found")
 )
 
 // WalletService handles wallet business logic
@@ -56,18 +56,18 @@ func (s *WalletService) CreateWallet(ctx context.Context, password string, userI
 
 	// Create wallet model
 	wallet := &models.Wallet{
-		UserID:               userID,
-		ChainID:              chainID,
-		Address:              encryptedKeyPair.Address,
-		PublicKey:            encryptedKeyPair.PublicKey,
-		EncryptedPrivateKey:  encryptedKeyPair.EncryptedPrivateKey,
-		Salt:                 salt,
-		WalletName:           walletName,
-		WalletDescription:    walletDescription,
-		IsActive:             true,
-		IsLocked:             false,
+		UserID:                userID,
+		ChainID:               chainID,
+		Address:               encryptedKeyPair.Address,
+		PublicKey:             encryptedKeyPair.PublicKey,
+		EncryptedPrivateKey:   encryptedKeyPair.EncryptedPrivateKey,
+		Salt:                  salt,
+		WalletName:            walletName,
+		WalletDescription:     walletDescription,
+		IsActive:              true,
+		IsLocked:              false,
 		FailedDecryptAttempts: 0,
-		CreatedBy:            createdBy,
+		CreatedBy:             createdBy,
 	}
 
 	// Save to database

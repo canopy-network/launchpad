@@ -385,6 +385,135 @@ func (r *userRepository) IncrementJWTVersion(ctx context.Context, userID uuid.UU
 	return nil
 }
 
+// UpdateProfile updates user profile fields (partial update)
+func (r *userRepository) UpdateProfile(ctx context.Context, userID uuid.UUID, req *models.UpdateProfileRequest) (*models.User, error) {
+	// Build dynamic query based on provided fields
+	setClauses := []string{"updated_at = CURRENT_TIMESTAMP"}
+	args := []interface{}{}
+	argCount := 1
+
+	// Add user ID as first argument
+	args = append(args, userID)
+	argCount++
+
+	if req.Username != nil {
+		setClauses = append(setClauses, fmt.Sprintf("username = $%d", argCount))
+		args = append(args, database.NullString(req.Username))
+		argCount++
+	}
+
+	if req.DisplayName != nil {
+		setClauses = append(setClauses, fmt.Sprintf("display_name = $%d", argCount))
+		args = append(args, database.NullString(req.DisplayName))
+		argCount++
+	}
+
+	if req.Bio != nil {
+		setClauses = append(setClauses, fmt.Sprintf("bio = $%d", argCount))
+		args = append(args, database.NullString(req.Bio))
+		argCount++
+	}
+
+	if req.AvatarURL != nil {
+		setClauses = append(setClauses, fmt.Sprintf("avatar_url = $%d", argCount))
+		args = append(args, database.NullString(req.AvatarURL))
+		argCount++
+	}
+
+	if req.WebsiteURL != nil {
+		setClauses = append(setClauses, fmt.Sprintf("website_url = $%d", argCount))
+		args = append(args, database.NullString(req.WebsiteURL))
+		argCount++
+	}
+
+	if req.TwitterHandle != nil {
+		setClauses = append(setClauses, fmt.Sprintf("twitter_handle = $%d", argCount))
+		args = append(args, database.NullString(req.TwitterHandle))
+		argCount++
+	}
+
+	if req.GithubUsername != nil {
+		setClauses = append(setClauses, fmt.Sprintf("github_username = $%d", argCount))
+		args = append(args, database.NullString(req.GithubUsername))
+		argCount++
+	}
+
+	if req.TelegramHandle != nil {
+		setClauses = append(setClauses, fmt.Sprintf("telegram_handle = $%d", argCount))
+		args = append(args, database.NullString(req.TelegramHandle))
+		argCount++
+	}
+
+	// If no fields to update, just return the current user
+	if len(setClauses) == 1 {
+		return r.GetByID(ctx, userID)
+	}
+
+	// Build and execute update query
+	query := fmt.Sprintf(`
+		UPDATE users SET %s
+		WHERE id = $1
+		RETURNING id, wallet_address, email, username, display_name, bio, avatar_url, website_url,
+		          twitter_handle, github_username, telegram_handle,
+		          is_verified, verification_tier, email_verified_at, jwt_version,
+		          total_chains_created, total_cnpy_invested, reputation_score,
+		          created_at, updated_at, last_active_at`,
+		fmt.Sprintf("%s", setClauses[0])+func() string {
+			result := ""
+			for i := 1; i < len(setClauses); i++ {
+				result += ", " + setClauses[i]
+			}
+			return result
+		}(),
+	)
+
+	var user models.User
+	var email, username, displayName, bio, avatarURL, websiteURL sql.NullString
+	var twitterHandle, githubUsername, telegramHandle sql.NullString
+	var emailVerifiedAt, lastActiveAt sql.NullTime
+
+	err := r.db.QueryRowxContext(ctx, query, args...).Scan(
+		&user.ID, &user.WalletAddress, &email, &username, &displayName, &bio,
+		&avatarURL, &websiteURL, &twitterHandle, &githubUsername, &telegramHandle,
+		&user.IsVerified, &user.VerificationTier, &emailVerifiedAt, &user.JWTVersion,
+		&user.TotalChainsCreated, &user.TotalCNPYInvested, &user.ReputationScore,
+		&user.CreatedAt, &user.UpdatedAt, &lastActiveAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			// Unique constraint violation
+			if pqErr.Constraint == "users_username_key" {
+				return nil, fmt.Errorf("username already taken")
+			}
+			return nil, fmt.Errorf("duplicate value")
+		}
+		return nil, fmt.Errorf("failed to update profile: %w", err)
+	}
+
+	// Handle nullable fields
+	user.Email = database.StringPtr(email)
+	user.Username = database.StringPtr(username)
+	user.DisplayName = database.StringPtr(displayName)
+	user.Bio = database.StringPtr(bio)
+	user.AvatarURL = database.StringPtr(avatarURL)
+	user.WebsiteURL = database.StringPtr(websiteURL)
+	user.TwitterHandle = database.StringPtr(twitterHandle)
+	user.GithubUsername = database.StringPtr(githubUsername)
+	user.TelegramHandle = database.StringPtr(telegramHandle)
+	if emailVerifiedAt.Valid {
+		user.EmailVerifiedAt = &emailVerifiedAt.Time
+	}
+	if lastActiveAt.Valid {
+		user.LastActiveAt = &lastActiveAt.Time
+	}
+
+	return &user, nil
+}
+
 // Helper methods
 func (r *userRepository) getUserByField(ctx context.Context, field, value string) (*models.User, error) {
 	query := fmt.Sprintf(`

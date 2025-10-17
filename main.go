@@ -43,6 +43,7 @@ func main() {
 	templateService := services.NewTemplateService(templateRepo)
 	virtualPoolService := services.NewVirtualPoolService(virtualPoolRepo)
 	walletService := services.NewWalletService(walletRepo)
+	userService := services.NewUserService(userRepo)
 
 	// Initialize email service (always use SMTP)
 	emailService := services.NewSMTPEmailService()
@@ -57,6 +58,7 @@ func main() {
 		AuthService:        authService,
 		VirtualPoolService: virtualPoolService,
 		WalletService:      walletService,
+		UserService:        userService,
 	}
 
 	// Initialize and start root chain event worker

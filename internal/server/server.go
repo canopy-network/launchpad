@@ -33,6 +33,7 @@ type Services struct {
 	AuthService        *services.AuthService
 	VirtualPoolService *services.VirtualPoolService
 	WalletService      *services.WalletService
+	UserService        *services.UserService
 }
 
 type Handlers struct {
@@ -41,6 +42,7 @@ type Handlers struct {
 	AuthHandler        *handlers.AuthHandler
 	VirtualPoolHandler *handlers.VirtualPoolHandler
 	WalletHandler      *handlers.WalletHandler
+	UserHandler        *handlers.UserHandler
 }
 
 func NewServer(cfg *config.Config, services *Services) *Server {
@@ -54,6 +56,7 @@ func NewServer(cfg *config.Config, services *Services) *Server {
 		AuthHandler:        handlers.NewAuthHandler(services.AuthService, validator),
 		VirtualPoolHandler: handlers.NewVirtualPoolHandler(services.VirtualPoolService, validator),
 		WalletHandler:      handlers.NewWalletHandler(services.WalletService, validator),
+		UserHandler:        handlers.NewUserHandler(services.UserService, validator),
 	}
 
 	// Configure rate limiting based on environment
@@ -142,6 +145,11 @@ func (s *Server) setupRoutes() {
 				r.Post("/logout", s.Handlers.AuthHandler.Logout)
 				r.Get("/sessions", s.Handlers.AuthHandler.GetSessions)
 				r.Delete("/sessions/{id}", s.Handlers.AuthHandler.RevokeSession)
+			})
+
+			// User routes
+			r.Route("/users", func(r chi.Router) {
+				r.Put("/profile", s.Handlers.UserHandler.UpdateProfile)
 			})
 
 			// Virtual pool routes

@@ -18,15 +18,15 @@ const (
 
 // Subscription manages a WebSocket connection to a root chain for real-time updates
 type Subscription struct {
-	chainId     uint64               // the chain id of the subscription
-	config      Config               // root chain configuration
-	conn        *websocket.Conn      // the underlying websocket connection
-	info        *lib.RootChainInfo   // cached root chain info from the publisher
-	handler     EventHandler         // callback function for processing events
-	logger      Logger               // logging interface
-	stopCh      chan struct{}        // channel to signal shutdown
-	mu          sync.RWMutex         // mutex for thread safety
-	isConnected bool                 // connection status
+	chainId     uint64             // the chain id of the subscription
+	config      Config             // root chain configuration
+	conn        *websocket.Conn    // the underlying websocket connection
+	info        *lib.RootChainInfo // cached root chain info from the publisher
+	handler     EventHandler       // callback function for processing events
+	logger      Logger             // logging interface
+	stopCh      chan struct{}      // channel to signal shutdown
+	mu          sync.RWMutex       // mutex for thread safety
+	isConnected bool               // connection status
 }
 
 // NewSubscription creates a new root chain subscription
