@@ -188,19 +188,19 @@ func (r *userRepository) ListByVerificationTier(ctx context.Context, tier string
 }
 
 // GetPositionsByUserID retrieves user positions
-func (r *userRepository) GetPositionsByUserID(ctx context.Context, userID uuid.UUID) ([]models.UserVirtualPosition, error) {
+func (r *userRepository) GetPositionsByUserID(ctx context.Context, userID uuid.UUID) ([]models.UserVirtualLPPosition, error) {
 	// This would be implemented when user_virtual_positions functionality is needed
 	return nil, fmt.Errorf("not implemented")
 }
 
 // GetPositionByUserAndChain retrieves user position for specific chain
-func (r *userRepository) GetPositionByUserAndChain(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (r *userRepository) GetPositionByUserAndChain(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	// This would be implemented when user_virtual_positions functionality is needed
 	return nil, fmt.Errorf("not implemented")
 }
 
 // UpdatePosition updates user position
-func (r *userRepository) UpdatePosition(ctx context.Context, position *models.UserVirtualPosition) (*models.UserVirtualPosition, error) {
+func (r *userRepository) UpdatePosition(ctx context.Context, position *models.UserVirtualLPPosition) (*models.UserVirtualLPPosition, error) {
 	// This would be implemented when user_virtual_positions functionality is needed
 	return nil, fmt.Errorf("not implemented")
 }

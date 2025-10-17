@@ -217,7 +217,7 @@ func TestUpsertUserPosition(t *testing.T) {
 	repo := NewVirtualPoolRepository(sqlxDB)
 
 	now := time.Now()
-	position := &models.UserVirtualPosition{
+	position := &models.UserVirtualLPPosition{
 		UserID:                uuid.New(),
 		ChainID:               uuid.New(),
 		VirtualPoolID:         uuid.New(),

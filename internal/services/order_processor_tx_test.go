@@ -36,15 +36,15 @@ func (m *MockVirtualPoolTxRepository) CreateTransactionInTx(ctx context.Context,
 	return args.Error(0)
 }
 
-func (m *MockVirtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (m *MockVirtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	args := m.Called(ctx, tx, userID, chainID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserVirtualPosition), args.Error(1)
+	return args.Get(0).(*models.UserVirtualLPPosition), args.Error(1)
 }
 
-func (m *MockVirtualPoolTxRepository) UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualPosition) error {
+func (m *MockVirtualPoolTxRepository) UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualLPPosition) error {
 	args := m.Called(ctx, tx, position)
 	return args.Error(0)
 }

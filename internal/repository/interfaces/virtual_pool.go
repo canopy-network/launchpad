@@ -23,9 +23,9 @@ type VirtualPoolRepository interface {
 	GetTransactionsByChainID(ctx context.Context, chainID uuid.UUID, filters TransactionFilters, pagination Pagination) ([]models.VirtualPoolTransaction, int, error)
 
 	// User position operations
-	GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error)
-	UpsertUserPosition(ctx context.Context, position *models.UserVirtualPosition) error
-	GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination Pagination) ([]models.UserVirtualPosition, int, error)
+	GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error)
+	UpsertUserPosition(ctx context.Context, position *models.UserVirtualLPPosition) error
+	GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination Pagination) ([]models.UserVirtualLPPosition, int, error)
 	GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]UserPositionWithAddress, error)
 }
 

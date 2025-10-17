@@ -222,7 +222,7 @@ func (op *OrderProcessorTx) processBuyOrderInTx(ctx context.Context, tx *sqlx.Tx
 	now := time.Now()
 	if position == nil {
 		// Create new position
-		position = &models.UserVirtualPosition{
+		position = &models.UserVirtualLPPosition{
 			UserID:                userID,
 			ChainID:               chainID,
 			VirtualPoolID:         pool.ID,

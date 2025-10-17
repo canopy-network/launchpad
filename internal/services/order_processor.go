@@ -111,7 +111,7 @@ func (op *OrderProcessor) processBuyOrder(ctx context.Context, order *lib.SellOr
 	now := time.Now()
 	if position == nil {
 		// Create new position
-		position = &models.UserVirtualPosition{
+		position = &models.UserVirtualLPPosition{
 			UserID:                userID,
 			ChainID:               chainID,
 			VirtualPoolID:         pool.ID,

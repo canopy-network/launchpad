@@ -23,9 +23,9 @@ type UserRepository interface {
 	ListByVerificationTier(ctx context.Context, tier string, pagination Pagination) ([]models.User, int, error)
 
 	// User positions and portfolio
-	GetPositionsByUserID(ctx context.Context, userID uuid.UUID) ([]models.UserVirtualPosition, error)
-	GetPositionByUserAndChain(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error)
-	UpdatePosition(ctx context.Context, position *models.UserVirtualPosition) (*models.UserVirtualPosition, error)
+	GetPositionsByUserID(ctx context.Context, userID uuid.UUID) ([]models.UserVirtualLPPosition, error)
+	GetPositionByUserAndChain(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error)
+	UpdatePosition(ctx context.Context, position *models.UserVirtualLPPosition) (*models.UserVirtualLPPosition, error)
 
 	// User statistics updates
 	UpdateChainsCreatedCount(ctx context.Context, userID uuid.UUID, increment int) error

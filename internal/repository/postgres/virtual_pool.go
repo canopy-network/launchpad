@@ -366,7 +366,7 @@ func (r *virtualPoolRepository) GetTransactionsByChainID(ctx context.Context, ch
 }
 
 // GetUserPosition retrieves a user's position for a specific chain
-func (r *virtualPoolRepository) GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (r *virtualPoolRepository) GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	query := `
 		SELECT id, user_id, chain_id, virtual_pool_id, token_balance, total_cnpy_invested,
 			   total_cnpy_withdrawn, average_entry_price_cnpy, unrealized_pnl_cnpy,
@@ -375,7 +375,7 @@ func (r *virtualPoolRepository) GetUserPosition(ctx context.Context, userID, cha
 		FROM user_virtual_positions
 		WHERE user_id = $1 AND chain_id = $2`
 
-	var position models.UserVirtualPosition
+	var position models.UserVirtualLPPosition
 	var firstPurchaseAt, lastActivityAt sql.NullTime
 
 	err := r.db.QueryRowxContext(ctx, query, userID, chainID).Scan(
@@ -404,7 +404,7 @@ func (r *virtualPoolRepository) GetUserPosition(ctx context.Context, userID, cha
 }
 
 // UpsertUserPosition inserts or updates a user position
-func (r *virtualPoolRepository) UpsertUserPosition(ctx context.Context, position *models.UserVirtualPosition) error {
+func (r *virtualPoolRepository) UpsertUserPosition(ctx context.Context, position *models.UserVirtualLPPosition) error {
 	query := `
 		INSERT INTO user_virtual_positions (
 			user_id, chain_id, virtual_pool_id, token_balance, total_cnpy_invested,
@@ -452,7 +452,7 @@ func (r *virtualPoolRepository) UpsertUserPosition(ctx context.Context, position
 }
 
 // GetPositionsByChainID retrieves all user positions for a specific chain with pagination
-func (r *virtualPoolRepository) GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination interfaces.Pagination) ([]models.UserVirtualPosition, int, error) {
+func (r *virtualPoolRepository) GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination interfaces.Pagination) ([]models.UserVirtualLPPosition, int, error) {
 	// Count query
 	countQuery := "SELECT COUNT(*) FROM user_virtual_positions WHERE chain_id = $1"
 	var total int
@@ -472,7 +472,7 @@ func (r *virtualPoolRepository) GetPositionsByChainID(ctx context.Context, chain
 		ORDER BY token_balance DESC
 		LIMIT $2 OFFSET $3`
 
-	positions := []models.UserVirtualPosition{}
+	positions := []models.UserVirtualLPPosition{}
 	err = r.db.SelectContext(ctx, &positions, dataQuery, chainID, pagination.Limit, pagination.Offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to query positions: %w", err)

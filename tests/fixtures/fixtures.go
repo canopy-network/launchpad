@@ -399,7 +399,7 @@ func (p *UserPositionFixture) WithPosition(tokenBalance int64, cnpyInvested, ent
 }
 
 // Create persists the user position to the database (works with *sqlx.DB or *sqlx.Tx)
-func (p *UserPositionFixture) Create(ctx context.Context, db sqlx.ExtContext) (*models.UserVirtualPosition, error) {
+func (p *UserPositionFixture) Create(ctx context.Context, db sqlx.ExtContext) (*models.UserVirtualLPPosition, error) {
 	query := `
 		INSERT INTO user_virtual_positions (
 			user_id, chain_id, virtual_pool_id, token_balance, total_cnpy_invested,
@@ -409,7 +409,7 @@ func (p *UserPositionFixture) Create(ctx context.Context, db sqlx.ExtContext) (*
 		RETURNING id, created_at, updated_at
 	`
 
-	position := &models.UserVirtualPosition{
+	position := &models.UserVirtualLPPosition{
 		UserID:                p.UserID,
 		ChainID:               p.ChainID,
 		VirtualPoolID:         p.VirtualPoolID,

@@ -31,26 +31,6 @@ type User struct {
 	LastActiveAt       *time.Time `json:"last_active_at" db:"last_active_at"`
 }
 
-// UserVirtualPosition represents user positions and holdings in virtual pools
-type UserVirtualPosition struct {
-	ID                    uuid.UUID  `json:"id" db:"id"`
-	UserID                uuid.UUID  `json:"user_id" db:"user_id"`
-	ChainID               uuid.UUID  `json:"chain_id" db:"chain_id"`
-	VirtualPoolID         uuid.UUID  `json:"virtual_pool_id" db:"virtual_pool_id"`
-	TokenBalance          int64      `json:"token_balance" db:"token_balance"`
-	TotalCNPYInvested     float64    `json:"total_cnpy_invested" db:"total_cnpy_invested"`
-	TotalCNPYWithdrawn    float64    `json:"total_cnpy_withdrawn" db:"total_cnpy_withdrawn"`
-	AverageEntryPriceCNPY float64    `json:"average_entry_price_cnpy" db:"average_entry_price_cnpy"`
-	UnrealizedPnlCNPY     float64    `json:"unrealized_pnl_cnpy" db:"unrealized_pnl_cnpy"`
-	RealizedPnlCNPY       float64    `json:"realized_pnl_cnpy" db:"realized_pnl_cnpy"`
-	TotalReturnPercent    float64    `json:"total_return_percent" db:"total_return_percent"`
-	IsActive              bool       `json:"is_active" db:"is_active"`
-	FirstPurchaseAt       *time.Time `json:"first_purchase_at" db:"first_purchase_at"`
-	LastActivityAt        *time.Time `json:"last_activity_at" db:"last_activity_at"`
-	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
-}
-
 // UpdateProfileRequest represents a request to update user profile
 // All fields are optional pointers to support partial updates
 type UpdateProfileRequest struct {

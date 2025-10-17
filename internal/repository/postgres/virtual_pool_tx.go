@@ -35,11 +35,11 @@ type VirtualPoolTxRepository interface {
 
 	// GetUserPositionForUpdate retrieves a user position with an exclusive row lock.
 	// Returns nil if position doesn't exist (not an error - user hasn't traded yet).
-	GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error)
+	GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error)
 
 	// UpsertUserPositionInTx inserts or updates a user position within a transaction.
 	// Uses ON CONFLICT to handle both new and existing positions atomically.
-	UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualPosition) error
+	UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualLPPosition) error
 }
 
 // virtualPoolTxRepository implements transaction-aware virtual pool operations
@@ -223,7 +223,7 @@ func (r *virtualPoolTxRepository) CreateTransactionInTx(ctx context.Context, tx 
 }
 
 // GetUserPositionForUpdate retrieves a user position with FOR UPDATE lock
-func (r *virtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (r *virtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	query := `
 		SELECT id, user_id, chain_id, virtual_pool_id, token_balance, total_cnpy_invested,
 			   total_cnpy_withdrawn, average_entry_price_cnpy, unrealized_pnl_cnpy,
@@ -233,7 +233,7 @@ func (r *virtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, 
 		WHERE user_id = $1 AND chain_id = $2
 		FOR UPDATE`
 
-	var position models.UserVirtualPosition
+	var position models.UserVirtualLPPosition
 	var firstPurchaseAt, lastActivityAt sql.NullTime
 
 	err := tx.QueryRowxContext(ctx, query, userID, chainID).Scan(
@@ -262,7 +262,7 @@ func (r *virtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, 
 }
 
 // UpsertUserPositionInTx inserts or updates a user position within a transaction
-func (r *virtualPoolTxRepository) UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualPosition) error {
+func (r *virtualPoolTxRepository) UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualLPPosition) error {
 	query := `
 		INSERT INTO user_virtual_positions (
 			user_id, chain_id, virtual_pool_id, token_balance, total_cnpy_invested,

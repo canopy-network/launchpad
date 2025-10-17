@@ -340,7 +340,7 @@ func (w *Worker) updateUserPosition(ctx context.Context, user *models.User, pool
 
 	if position == nil {
 		// Create new position
-		position = &models.UserVirtualPosition{
+		position = &models.UserVirtualLPPosition{
 			UserID:                user.ID,
 			ChainID:               chain.ID,
 			VirtualPoolID:         pool.ID,

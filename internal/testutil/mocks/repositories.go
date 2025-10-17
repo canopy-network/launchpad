@@ -218,22 +218,22 @@ func (m *MockVirtualPoolRepository) GetTransactionsByChainID(ctx context.Context
 	return args.Get(0).([]models.VirtualPoolTransaction), args.Int(1), args.Error(2)
 }
 
-func (m *MockVirtualPoolRepository) GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (m *MockVirtualPoolRepository) GetUserPosition(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	args := m.Called(ctx, userID, chainID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserVirtualPosition), args.Error(1)
+	return args.Get(0).(*models.UserVirtualLPPosition), args.Error(1)
 }
 
-func (m *MockVirtualPoolRepository) UpsertUserPosition(ctx context.Context, position *models.UserVirtualPosition) error {
+func (m *MockVirtualPoolRepository) UpsertUserPosition(ctx context.Context, position *models.UserVirtualLPPosition) error {
 	args := m.Called(ctx, position)
 	return args.Error(0)
 }
 
-func (m *MockVirtualPoolRepository) GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination interfaces.Pagination) ([]models.UserVirtualPosition, int, error) {
+func (m *MockVirtualPoolRepository) GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination interfaces.Pagination) ([]models.UserVirtualLPPosition, int, error) {
 	args := m.Called(ctx, chainID, pagination)
-	return args.Get(0).([]models.UserVirtualPosition), args.Int(1), args.Error(2)
+	return args.Get(0).([]models.UserVirtualLPPosition), args.Int(1), args.Error(2)
 }
 
 func (m *MockVirtualPoolRepository) GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]interfaces.UserPositionWithAddress, error) {
@@ -312,28 +312,28 @@ func (m *MockUserRepository) ListByVerificationTier(ctx context.Context, tier st
 	return args.Get(0).([]models.User), args.Int(1), args.Error(2)
 }
 
-func (m *MockUserRepository) GetPositionsByUserID(ctx context.Context, userID uuid.UUID) ([]models.UserVirtualPosition, error) {
+func (m *MockUserRepository) GetPositionsByUserID(ctx context.Context, userID uuid.UUID) ([]models.UserVirtualLPPosition, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]models.UserVirtualPosition), args.Error(1)
+	return args.Get(0).([]models.UserVirtualLPPosition), args.Error(1)
 }
 
-func (m *MockUserRepository) GetPositionByUserAndChain(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (m *MockUserRepository) GetPositionByUserAndChain(ctx context.Context, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	args := m.Called(ctx, userID, chainID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserVirtualPosition), args.Error(1)
+	return args.Get(0).(*models.UserVirtualLPPosition), args.Error(1)
 }
 
-func (m *MockUserRepository) UpdatePosition(ctx context.Context, position *models.UserVirtualPosition) (*models.UserVirtualPosition, error) {
+func (m *MockUserRepository) UpdatePosition(ctx context.Context, position *models.UserVirtualLPPosition) (*models.UserVirtualLPPosition, error) {
 	args := m.Called(ctx, position)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserVirtualPosition), args.Error(1)
+	return args.Get(0).(*models.UserVirtualLPPosition), args.Error(1)
 }
 
 func (m *MockUserRepository) UpdateChainsCreatedCount(ctx context.Context, userID uuid.UUID, increment int) error {
@@ -406,15 +406,15 @@ func (m *MockVirtualPoolTxRepository) CreateTransactionInTx(ctx context.Context,
 	return args.Error(0)
 }
 
-func (m *MockVirtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualPosition, error) {
+func (m *MockVirtualPoolTxRepository) GetUserPositionForUpdate(ctx context.Context, tx *sqlx.Tx, userID, chainID uuid.UUID) (*models.UserVirtualLPPosition, error) {
 	args := m.Called(ctx, tx, userID, chainID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*models.UserVirtualPosition), args.Error(1)
+	return args.Get(0).(*models.UserVirtualLPPosition), args.Error(1)
 }
 
-func (m *MockVirtualPoolTxRepository) UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualPosition) error {
+func (m *MockVirtualPoolTxRepository) UpsertUserPositionInTx(ctx context.Context, tx *sqlx.Tx, position *models.UserVirtualLPPosition) error {
 	args := m.Called(ctx, tx, position)
 	return args.Error(0)
 }
