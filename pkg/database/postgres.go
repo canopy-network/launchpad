@@ -50,10 +50,25 @@ func Transaction(db *sqlx.DB, fn func(*sqlx.Tx) error) error {
 	return err
 }
 
+// sanitizeString removes null bytes from a string to ensure PostgreSQL UTF-8 compatibility
+func sanitizeString(s string) string {
+	// PostgreSQL UTF-8 encoding doesn't allow null bytes (0x00)
+	// Remove them to prevent "invalid byte sequence for encoding" errors
+	result := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		if s[i] != 0 {
+			result = append(result, s[i])
+		}
+	}
+	return string(result)
+}
+
 // NullString converts a string pointer to sql.NullString
+// It sanitizes the string by removing null bytes to ensure PostgreSQL compatibility
 func NullString(s *string) sql.NullString {
 	if s != nil {
-		return sql.NullString{String: *s, Valid: true}
+		sanitized := sanitizeString(*s)
+		return sql.NullString{String: sanitized, Valid: true}
 	}
 	return sql.NullString{Valid: false}
 }
