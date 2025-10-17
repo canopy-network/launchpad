@@ -51,9 +51,6 @@ Complete API reference for the Launchpad blockchain creation and management plat
 
 - `GET /api/v1/graduated-pools` - Get a trading information for all graduated chains
 - `GET /api/v1/graduated-pools/{id}` - Get a trading information for a specific graduated chains
-- `POST /api/v1/graduated-pools/liquidity-deposit` - Deposit liquidity from a graduated chain
-- `POST /api/v1/graduated-pools/liquidity-withdrawal` - Remove liquidity from a graduated chain
-- `POST /api/v1/graduated-pools/swap` - Execute or simulate an AMM dex swap
 
 ### Wallets
 

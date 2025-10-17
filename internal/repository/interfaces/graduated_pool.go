@@ -14,6 +14,8 @@ type GraduatedPoolRepository interface {
 	GetAllPools(ctx context.Context, pagination Pagination) ([]models.GraduatedPool, int, error)
 	UpdatePoolState(ctx context.Context, chainID uuid.UUID, update *PoolStateUpdate) error
 
+	// AMM Operations
+
 	// Transaction operations
 	CreateTransaction(ctx context.Context, transaction *models.GraduatedPoolTransaction) error
 	GetTransactionsByPoolID(ctx context.Context, poolID uuid.UUID, pagination Pagination) ([]models.GraduatedPoolTransaction, int, error)
@@ -26,3 +28,10 @@ type GraduatedPoolRepository interface {
 	GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination Pagination) ([]models.UserGraduatedLPPosition, int, error)
 	GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]UserPositionWithAddress, error)
 }
+
+/*
+Convert these APIs to internal transaction processing
+- `POST /api/v1/graduated-pools/liquidity-deposit` - Deposit liquidity from a graduated chain
+- `POST /api/v1/graduated-pools/liquidity-withdrawal` - Remove liquidity from a graduated chain
+- `POST /api/v1/graduated-pools/swap` - Execute or simulate an AMM dex swap
+*/

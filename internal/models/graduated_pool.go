@@ -25,7 +25,7 @@ type GraduatedPool struct {
 	UpdatedAt             time.Time `json:"updated_at" db:"updated_at"`
 }
 
-// GraduatedPoolTransaction represents graduated trading transactions
+// GraduatedPoolTransaction represents graduated trading transactions (swaps, liquidity deposits and withdrawals)
 type GraduatedPoolTransaction struct {
 	ID                    uuid.UUID `json:"id" db:"id"`
 	GraduatedPoolID       uuid.UUID `json:"graduated_pool_id" db:"graduated_pool_id"`
