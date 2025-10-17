@@ -14,8 +14,6 @@ type GraduatedPoolRepository interface {
 	GetAllPools(ctx context.Context, pagination Pagination) ([]models.GraduatedPool, int, error)
 	UpdatePoolState(ctx context.Context, chainID uuid.UUID, update *PoolStateUpdate) error
 
-	// AMM Operations
-
 	// Transaction operations
 	CreateTransaction(ctx context.Context, transaction *models.GraduatedPoolTransaction) error
 	GetTransactionsByPoolID(ctx context.Context, poolID uuid.UUID, pagination Pagination) ([]models.GraduatedPoolTransaction, int, error)
