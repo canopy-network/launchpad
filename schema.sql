@@ -55,7 +55,7 @@ CREATE TABLE session_tokens (
 
     -- Session metadata
     user_agent TEXT, -- Browser/client user agent string
-    ip_address INET, -- IP address of the client
+    ip_address TEXT, -- IP address of the client
     device_name VARCHAR(200), -- Optional friendly device name (e.g., "Chrome on MacBook")
 
     -- Token lifecycle

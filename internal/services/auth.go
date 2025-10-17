@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"net"
 	"strings"
 	"sync"
 	"time"
@@ -145,17 +144,14 @@ func (s *AuthService) CreateSession(ctx context.Context, userID uuid.UUID, userA
 	// Get first 8 characters for prefix
 	tokenPrefix := token[:8]
 
-	// Parse IP address
-	var ip *net.IP
-	if ipAddress != "" {
-		parsedIP := net.ParseIP(ipAddress)
-		if parsedIP != nil {
-			ip = &parsedIP
-		}
-	}
-
 	// Sanitize user agent to prevent null byte errors
 	sanitizedUserAgent := sanitizeString(userAgent)
+
+	// Store IP address as string (already sanitized in CompleteEmailLogin)
+	var ip *string
+	if ipAddress != "" {
+		ip = &ipAddress
+	}
 
 	// Create session token model
 	sessionToken := &models.SessionToken{
@@ -259,6 +255,7 @@ func (s *AuthService) CompleteEmailLogin(ctx context.Context, email, userAgent, 
 		return nil, fmt.Errorf("failed to mark email as verified: %w", err)
 	}
 
+	fmt.Println(email, userAgent, ipAddress)
 	// Create session token
 	token, user, err := s.CreateSession(ctx, user.ID, userAgent, ipAddress)
 	if err != nil {

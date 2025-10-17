@@ -36,7 +36,7 @@ func (r *sessionTokenRepository) Create(ctx context.Context, token *models.Sessi
 		token.TokenHash,
 		token.TokenPrefix,
 		database.NullString(token.UserAgent),
-		token.IPAddress,
+		database.NullString(token.IPAddress),
 		database.NullString(token.DeviceName),
 		token.ExpiresAt,
 		token.LastUsedAt,
@@ -246,7 +246,7 @@ func (r *sessionTokenRepository) Delete(ctx context.Context, id uuid.UUID) error
 
 func (r *sessionTokenRepository) getSessionToken(ctx context.Context, query string, arg interface{}) (*models.SessionToken, error) {
 	var token models.SessionToken
-	var userAgent, deviceName sql.NullString
+	var userAgent, ipAddress, deviceName sql.NullString
 	var revoked_at sql.NullTime
 	var revocation_reason sql.NullString
 
@@ -256,7 +256,7 @@ func (r *sessionTokenRepository) getSessionToken(ctx context.Context, query stri
 		&token.TokenHash,
 		&token.TokenPrefix,
 		&userAgent,
-		&token.IPAddress,
+		&ipAddress,
 		&deviceName,
 		&token.ExpiresAt,
 		&token.LastUsedAt,
@@ -277,6 +277,7 @@ func (r *sessionTokenRepository) getSessionToken(ctx context.Context, query stri
 
 	// Handle nullable fields
 	token.UserAgent = database.StringPtr(userAgent)
+	token.IPAddress = database.StringPtr(ipAddress)
 	token.DeviceName = database.StringPtr(deviceName)
 	token.RevocationReason = database.StringPtr(revocation_reason)
 	if revoked_at.Valid {
@@ -296,7 +297,7 @@ func (r *sessionTokenRepository) getSessionTokens(ctx context.Context, query str
 	var tokens []models.SessionToken
 	for rows.Next() {
 		var token models.SessionToken
-		var userAgent, deviceName sql.NullString
+		var userAgent, ipAddress, deviceName sql.NullString
 		var revokedAt sql.NullTime
 		var revocationReason sql.NullString
 
@@ -306,7 +307,7 @@ func (r *sessionTokenRepository) getSessionTokens(ctx context.Context, query str
 			&token.TokenHash,
 			&token.TokenPrefix,
 			&userAgent,
-			&token.IPAddress,
+			&ipAddress,
 			&deviceName,
 			&token.ExpiresAt,
 			&token.LastUsedAt,
@@ -323,6 +324,7 @@ func (r *sessionTokenRepository) getSessionTokens(ctx context.Context, query str
 
 		// Handle nullable fields
 		token.UserAgent = database.StringPtr(userAgent)
+		token.IPAddress = database.StringPtr(ipAddress)
 		token.DeviceName = database.StringPtr(deviceName)
 		token.RevocationReason = database.StringPtr(revocationReason)
 		if revokedAt.Valid {
