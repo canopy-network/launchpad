@@ -147,6 +147,79 @@ func (h *ChainHandler) DeleteChain(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UpdateChainDescription handles PUT /api/v1/chains/{id}/description
+func (h *ChainHandler) UpdateChainDescription(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+	userID := h.getUserIDFromContext(ctx)
+
+	var req models.UpdateChainDescriptionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.BadRequest(w, "Invalid JSON payload", err.Error())
+		return
+	}
+
+	// Validate request
+	if err := h.validator.Validate(&req); err != nil {
+		validationErrors := h.validator.FormatErrors(err)
+		response.ValidationError(w, validationErrors)
+		return
+	}
+
+	// Update chain description
+	chain, err := h.chainService.UpdateChainDescription(ctx, chainID, userID, &req)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, chain)
+}
+
+// GetRepository handles GET /api/v1/chains/{id}/repository
+func (h *ChainHandler) GetRepository(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+	userID := h.getUserIDFromContext(ctx)
+
+	repo, err := h.chainService.GetRepositoryByChainID(ctx, chainID, userID)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, repo)
+}
+
+// UpdateRepository handles PUT /api/v1/chains/{id}/repository
+func (h *ChainHandler) UpdateRepository(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+	userID := h.getUserIDFromContext(ctx)
+
+	var req models.UpdateChainRepositoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.BadRequest(w, "Invalid JSON payload", err.Error())
+		return
+	}
+
+	// Validate request
+	if err := h.validator.Validate(&req); err != nil {
+		validationErrors := h.validator.FormatErrors(err)
+		response.ValidationError(w, validationErrors)
+		return
+	}
+
+	// Update repository
+	repo, err := h.chainService.UpdateRepositoryByChainID(ctx, chainID, userID, &req)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, repo)
+}
+
 // GetTransactions handles GET /api/v1/chains/{id}/transactions
 func (h *ChainHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -189,6 +262,80 @@ func (h *ChainHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SuccessWithPagination(w, http.StatusOK, transactions, pagination)
+}
+
+// GetAssets handles GET /api/v1/chains/{id}/assets
+func (h *ChainHandler) GetAssets(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+	userID := h.getUserIDFromContext(ctx)
+
+	assets, err := h.chainService.GetAssets(ctx, chainID, userID)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, assets)
+}
+
+// CreateAsset handles POST /api/v1/chains/{id}/assets
+func (h *ChainHandler) CreateAsset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+	userID := h.getUserIDFromContext(ctx)
+
+	var req models.CreateChainAssetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.BadRequest(w, "Invalid JSON payload", err.Error())
+		return
+	}
+
+	// Validate request
+	if err := h.validator.Validate(&req); err != nil {
+		validationErrors := h.validator.FormatErrors(err)
+		response.ValidationError(w, validationErrors)
+		return
+	}
+
+	// Create asset
+	asset, err := h.chainService.CreateAsset(ctx, chainID, userID, &req)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, asset)
+}
+
+// UpdateAsset handles PUT /api/v1/chains/{id}/assets/{asset_id}
+func (h *ChainHandler) UpdateAsset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+	assetID := chi.URLParam(r, "asset_id")
+	userID := h.getUserIDFromContext(ctx)
+
+	var req models.UpdateChainAssetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.BadRequest(w, "Invalid JSON payload", err.Error())
+		return
+	}
+
+	// Validate request
+	if err := h.validator.Validate(&req); err != nil {
+		validationErrors := h.validator.FormatErrors(err)
+		response.ValidationError(w, validationErrors)
+		return
+	}
+
+	// Update asset
+	asset, err := h.chainService.UpdateAsset(ctx, chainID, assetID, userID, &req)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, asset)
 }
 
 // Helper methods
@@ -253,6 +400,10 @@ func (h *ChainHandler) handleServiceError(w http.ResponseWriter, err error) {
 		response.UnprocessableEntity(w, "Chain is not in draft status", nil)
 	case services.ErrUnauthorized:
 		response.Forbidden(w, "Access denied")
+	case services.ErrRepositoryNotFound:
+		response.NotFound(w, "Repository not found")
+	case services.ErrAssetNotFound:
+		response.NotFound(w, "Asset not found")
 	default:
 		log.Printf("Unhandled service error: %v", err)
 		response.InternalServerError(w, "Internal server error")

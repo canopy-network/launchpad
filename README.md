@@ -157,6 +157,25 @@ make load-fixtures
 
 ## Development
 
+### Hot Reloading with Air
+
+For automatic rebuilds and restarts during development, use [Air](https://github.com/cosmtrek/air):
+
+```bash
+# Install Air (if not already installed)
+go install github.com/cosmtrek/air@latest
+
+# Run with hot reloading
+air
+```
+
+Air watches for file changes and automatically:
+- Rebuilds the application when Go files are modified
+- Loads environment variables from `.env` file
+- Restarts the server with the new binary
+
+Configuration is in `.air.toml`. The setup mirrors `make run` but with automatic reloading.
+
 ### Available Make Commands
 
 ```bash

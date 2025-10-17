@@ -162,6 +162,31 @@ func (r *chainRepository) Update(ctx context.Context, chain *models.Chain) (*mod
 	return chain, nil
 }
 
+// UpdateDescription updates only the chain description
+func (r *chainRepository) UpdateDescription(ctx context.Context, id uuid.UUID, description string) error {
+	query := `
+		UPDATE chains SET
+			chain_description = $2,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1`
+
+	result, err := r.db.ExecContext(ctx, query, id, description)
+	if err != nil {
+		return fmt.Errorf("failed to update chain description: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("chain not found")
+	}
+
+	return nil
+}
+
 // Delete deletes a chain
 func (r *chainRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM chains WHERE id = $1`
@@ -498,13 +523,98 @@ func (r *chainRepository) CreateRepository(ctx context.Context, repo *models.Cha
 }
 
 func (r *chainRepository) UpdateRepository(ctx context.Context, repo *models.ChainRepository) (*models.ChainRepository, error) {
-	// Implementation for updating repository
-	return nil, fmt.Errorf("not implemented")
+	query := `
+		UPDATE chain_repositories SET
+			github_url = $2,
+			repository_name = $3,
+			repository_owner = $4,
+			default_branch = $5,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE chain_id = $1
+		RETURNING id, is_connected, oauth_token_hash, webhook_secret, auto_upgrade_enabled,
+			upgrade_trigger, last_sync_commit_hash, last_sync_time, build_status,
+			last_build_time, build_logs, created_at, updated_at`
+
+	var oauthTokenHash, webhookSecret, lastSyncCommitHash, buildLogs sql.NullString
+	var lastSyncTime, lastBuildTime sql.NullTime
+
+	err := r.db.QueryRowxContext(ctx, query,
+		repo.ChainID,
+		repo.GithubURL,
+		repo.RepositoryName,
+		repo.RepositoryOwner,
+		repo.DefaultBranch,
+	).Scan(
+		&repo.ID, &repo.IsConnected, &oauthTokenHash, &webhookSecret,
+		&repo.AutoUpgradeEnabled, &repo.UpgradeTrigger, &lastSyncCommitHash,
+		&lastSyncTime, &repo.BuildStatus, &lastBuildTime, &buildLogs,
+		&repo.CreatedAt, &repo.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("repository not found")
+		}
+		return nil, fmt.Errorf("failed to update repository: %w", err)
+	}
+
+	// Handle nullable fields
+	repo.OAuthTokenHash = database.StringPtr(oauthTokenHash)
+	repo.WebhookSecret = database.StringPtr(webhookSecret)
+	repo.LastSyncCommitHash = database.StringPtr(lastSyncCommitHash)
+	repo.BuildLogs = database.StringPtr(buildLogs)
+	if lastSyncTime.Valid {
+		repo.LastSyncTime = &lastSyncTime.Time
+	}
+	if lastBuildTime.Valid {
+		repo.LastBuildTime = &lastBuildTime.Time
+	}
+
+	return repo, nil
 }
 
 func (r *chainRepository) GetRepositoryByChainID(ctx context.Context, chainID uuid.UUID) (*models.ChainRepository, error) {
-	// Implementation for getting repository by chain ID
-	return nil, fmt.Errorf("repository not found")
+	query := `
+		SELECT id, chain_id, github_url, repository_name, repository_owner, default_branch,
+			is_connected, oauth_token_hash, webhook_secret, auto_upgrade_enabled,
+			upgrade_trigger, last_sync_commit_hash, last_sync_time, build_status,
+			last_build_time, build_logs, created_at, updated_at
+		FROM chain_repositories
+		WHERE chain_id = $1`
+
+	var repo models.ChainRepository
+	var oauthTokenHash, webhookSecret, lastSyncCommitHash, buildLogs sql.NullString
+	var lastSyncTime, lastBuildTime sql.NullTime
+
+	err := r.db.QueryRowxContext(ctx, query, chainID).Scan(
+		&repo.ID, &repo.ChainID, &repo.GithubURL, &repo.RepositoryName,
+		&repo.RepositoryOwner, &repo.DefaultBranch, &repo.IsConnected,
+		&oauthTokenHash, &webhookSecret, &repo.AutoUpgradeEnabled,
+		&repo.UpgradeTrigger, &lastSyncCommitHash, &lastSyncTime,
+		&repo.BuildStatus, &lastBuildTime, &buildLogs,
+		&repo.CreatedAt, &repo.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("repository not found")
+		}
+		return nil, fmt.Errorf("failed to get repository: %w", err)
+	}
+
+	// Handle nullable fields
+	repo.OAuthTokenHash = database.StringPtr(oauthTokenHash)
+	repo.WebhookSecret = database.StringPtr(webhookSecret)
+	repo.LastSyncCommitHash = database.StringPtr(lastSyncCommitHash)
+	repo.BuildLogs = database.StringPtr(buildLogs)
+	if lastSyncTime.Valid {
+		repo.LastSyncTime = &lastSyncTime.Time
+	}
+	if lastBuildTime.Valid {
+		repo.LastBuildTime = &lastBuildTime.Time
+	}
+
+	return &repo, nil
 }
 
 func (r *chainRepository) DeleteRepository(ctx context.Context, chainID uuid.UUID) error {
@@ -533,20 +643,154 @@ func (r *chainRepository) DeleteSocialLinksByChainID(ctx context.Context, chainI
 	return fmt.Errorf("not implemented")
 }
 
-// Assets operations (simplified implementations)
+// Assets operations
 func (r *chainRepository) CreateAssets(ctx context.Context, chainID uuid.UUID, assets []models.ChainAsset) error {
-	// Implementation for creating assets
-	return fmt.Errorf("not implemented")
+	if len(assets) == 0 {
+		return nil
+	}
+
+	query := `
+		INSERT INTO chain_assets (
+			chain_id, asset_type, file_name, file_url, file_size_bytes, mime_type,
+			title, description, alt_text, display_order, is_primary, is_featured,
+			is_active, moderation_status, moderation_notes, uploaded_by
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+		)`
+
+	for _, asset := range assets {
+		_, err := r.db.ExecContext(ctx, query,
+			chainID,
+			asset.AssetType,
+			asset.FileName,
+			asset.FileURL,
+			database.NullInt64(asset.FileSizeBytes),
+			database.NullString(asset.MimeType),
+			database.NullString(asset.Title),
+			database.NullString(asset.Description),
+			database.NullString(asset.AltText),
+			asset.DisplayOrder,
+			asset.IsPrimary,
+			asset.IsFeatured,
+			asset.IsActive,
+			asset.ModerationStatus,
+			database.NullString(asset.ModerationNotes),
+			asset.UploadedBy,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create asset: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (r *chainRepository) UpdateAssets(ctx context.Context, chainID uuid.UUID, assets []models.ChainAsset) error {
-	// Implementation for updating assets
-	return fmt.Errorf("not implemented")
+	// Batch update implementation (currently not used by API but kept for interface compatibility)
+	if len(assets) == 0 {
+		return nil
+	}
+
+	for _, asset := range assets {
+		err := r.UpdateAsset(ctx, &asset)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GetAssetByID gets a single asset by ID
+func (r *chainRepository) GetAssetByID(ctx context.Context, assetID uuid.UUID) (*models.ChainAsset, error) {
+	query := `
+		SELECT id, chain_id, asset_type, file_name, file_url, file_size_bytes, mime_type,
+			title, description, alt_text, display_order, is_primary, is_featured, is_active,
+			moderation_status, moderation_notes, uploaded_by, created_at, updated_at
+		FROM chain_assets
+		WHERE id = $1`
+
+	var asset models.ChainAsset
+	err := r.db.GetContext(ctx, &asset, query, assetID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("asset not found")
+		}
+		return nil, fmt.Errorf("failed to get asset: %w", err)
+	}
+
+	return &asset, nil
+}
+
+// UpdateAsset updates a single asset
+func (r *chainRepository) UpdateAsset(ctx context.Context, asset *models.ChainAsset) error {
+	query := `
+		UPDATE chain_assets SET
+			file_name = $2,
+			file_url = $3,
+			file_size_bytes = $4,
+			mime_type = $5,
+			title = $6,
+			description = $7,
+			alt_text = $8,
+			display_order = $9,
+			is_primary = $10,
+			is_featured = $11,
+			is_active = $12,
+			moderation_status = $13,
+			moderation_notes = $14,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1
+		RETURNING updated_at`
+
+	err := r.db.QueryRowxContext(ctx, query,
+		asset.ID,
+		asset.FileName,
+		asset.FileURL,
+		database.NullInt64(asset.FileSizeBytes),
+		database.NullString(asset.MimeType),
+		database.NullString(asset.Title),
+		database.NullString(asset.Description),
+		database.NullString(asset.AltText),
+		asset.DisplayOrder,
+		asset.IsPrimary,
+		asset.IsFeatured,
+		asset.IsActive,
+		asset.ModerationStatus,
+		database.NullString(asset.ModerationNotes),
+	).Scan(&asset.UpdatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("asset not found")
+		}
+		return fmt.Errorf("failed to update asset: %w", err)
+	}
+
+	return nil
 }
 
 func (r *chainRepository) GetAssetsByChainID(ctx context.Context, chainID uuid.UUID) ([]models.ChainAsset, error) {
-	// Implementation for getting assets
-	return nil, nil
+	query := `
+		SELECT id, chain_id, asset_type, file_name, file_url, file_size_bytes, mime_type,
+			title, description, alt_text, display_order, is_primary, is_featured, is_active,
+			moderation_status, moderation_notes, uploaded_by, created_at, updated_at
+		FROM chain_assets
+		WHERE chain_id = $1
+		ORDER BY display_order ASC, created_at ASC`
+
+	var assets []models.ChainAsset
+	err := r.db.SelectContext(ctx, &assets, query, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assets: %w", err)
+	}
+
+	// Return empty slice if no assets found (not an error)
+	if assets == nil {
+		assets = []models.ChainAsset{}
+	}
+
+	return assets, nil
 }
 
 func (r *chainRepository) DeleteAssetsByChainID(ctx context.Context, chainID uuid.UUID) error {

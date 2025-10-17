@@ -406,3 +406,239 @@ func TestGetTemplates(t *testing.T) {
 		t.Error("Test Template 2 not found in API response")
 	}
 }
+
+// TestUpdateChainDescription tests updating a chain's description
+func TestUpdateChainDescription(t *testing.T) {
+	var chainID uuid.UUID
+
+	// Setup: Create a test chain using fixtures
+	testutils.WithTestDB(t, func(db *sqlx.DB) {
+		creatorID := uuid.MustParse(testutils.TestUserID)
+		chainName := fmt.Sprintf("Update Description Test Chain %d", time.Now().UnixNano())
+
+		chainFixture := fixtures.DefaultChain(creatorID)
+		chainFixture.ChainName = chainName
+		desc := "Original description"
+		chainFixture.ChainDescription = &desc
+		chain, err := chainFixture.
+			WithTokenSymbol("UPDTEST").
+			Create(context.Background(), db)
+		require.NoError(t, err)
+		chainID = chain.ID
+
+		// Cleanup after test
+		t.Cleanup(func() {
+			db.ExecContext(context.Background(),
+				"DELETE FROM chains WHERE id = $1", chainID)
+		})
+
+		t.Logf("Created test chain: %s (ID: %s)", chainName, chainID)
+	})
+
+	client := testutils.NewTestClient()
+
+	// Step 1: Update the chain description
+	t.Log("Updating chain description...")
+	updateRequest := map[string]interface{}{
+		"chain_description": "This is the updated description with more details about the chain.",
+	}
+
+	updatePath := testutils.GetAPIPath(fmt.Sprintf("/chains/%s/description", chainID))
+	resp, body := client.Put(t, updatePath, updateRequest)
+
+	testutils.AssertStatusOK(t, resp)
+
+	// Step 2: Validate the response
+	var updateResponse struct {
+		Data models.Chain `json:"data"`
+	}
+	testutils.UnmarshalResponse(t, body, &updateResponse)
+
+	updatedChain := updateResponse.Data
+
+	// Verify the description was updated
+	if updatedChain.ChainDescription == nil {
+		t.Error("Expected chain_description to be set")
+	} else if *updatedChain.ChainDescription != "This is the updated description with more details about the chain." {
+		t.Errorf("Expected description='This is the updated description with more details about the chain.', got '%s'",
+			*updatedChain.ChainDescription)
+	}
+
+	// Verify the chain ID matches
+	if updatedChain.ID != chainID {
+		t.Errorf("Expected chain ID='%s', got '%s'", chainID, updatedChain.ID)
+	}
+
+	t.Logf("Successfully updated chain description")
+
+	// Step 3: Fetch the chain again to verify persistence
+	t.Log("Fetching chain to verify description was persisted...")
+	getPath := testutils.GetAPIPath(fmt.Sprintf("/chains/%s", chainID))
+	resp, body = client.Get(t, getPath)
+
+	testutils.AssertStatusOK(t, resp)
+
+	var fetchResponse struct {
+		Data models.Chain `json:"data"`
+	}
+	testutils.UnmarshalResponse(t, body, &fetchResponse)
+
+	fetchedChain := fetchResponse.Data
+
+	// Verify the description persisted
+	if fetchedChain.ChainDescription == nil {
+		t.Error("Expected chain_description to be set after fetch")
+	} else if *fetchedChain.ChainDescription != "This is the updated description with more details about the chain." {
+		t.Errorf("Persisted description mismatch: expected='This is the updated description with more details about the chain.', got '%s'",
+			*fetchedChain.ChainDescription)
+	}
+
+	t.Logf("Successfully verified chain description persistence")
+}
+
+// TestUpdateChainDescriptionValidation tests validation errors for updating description
+func TestUpdateChainDescriptionValidation(t *testing.T) {
+	var chainID uuid.UUID
+
+	// Setup: Create a test chain
+	testutils.WithTestDB(t, func(db *sqlx.DB) {
+		creatorID := uuid.MustParse(testutils.TestUserID)
+		chainName := fmt.Sprintf("Validation Test Chain %d", time.Now().UnixNano())
+
+		chainFixture := fixtures.DefaultChain(creatorID)
+		chainFixture.ChainName = chainName
+		chain, err := chainFixture.
+			WithTokenSymbol("VALTEST").
+			Create(context.Background(), db)
+		require.NoError(t, err)
+		chainID = chain.ID
+
+		t.Cleanup(func() {
+			db.ExecContext(context.Background(),
+				"DELETE FROM chains WHERE id = $1", chainID)
+		})
+	})
+
+	client := testutils.NewTestClient()
+
+	tests := []struct {
+		name           string
+		request        map[string]interface{}
+		expectedStatus int
+		description    string
+	}{
+		{
+			name:           "Missing description",
+			request:        map[string]interface{}{},
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should fail when chain_description is missing",
+		},
+		{
+			name: "Description too long",
+			request: map[string]interface{}{
+				"chain_description": string(make([]byte, 5001)), // Exceeds max of 5000
+			},
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should fail when chain_description exceeds max length",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			updatePath := testutils.GetAPIPath(fmt.Sprintf("/chains/%s/description", chainID))
+			resp, body := client.Put(t, updatePath, tt.request)
+
+			if resp.StatusCode != tt.expectedStatus {
+				t.Errorf("%s: expected status %d, got %d. Body: %s",
+					tt.description, tt.expectedStatus, resp.StatusCode, string(body))
+			}
+
+			// Validate error response structure
+			if resp.StatusCode >= 400 {
+				var errorResponse struct {
+					Error *testutils.ErrorResponse `json:"error"`
+				}
+				if err := json.Unmarshal(body, &errorResponse); err != nil {
+					t.Errorf("Failed to parse error response: %v", err)
+				} else if errorResponse.Error == nil {
+					t.Error("Expected error field in response")
+				} else {
+					t.Logf("Error code: %s, message: %s", errorResponse.Error.Code, errorResponse.Error.Message)
+				}
+			}
+		})
+	}
+}
+
+// TestUpdateChainDescriptionUnauthorized tests that users cannot update chains they don't own
+func TestUpdateChainDescriptionUnauthorized(t *testing.T) {
+	var chainID uuid.UUID
+
+	// Setup: Create a chain owned by a different user
+	testutils.WithTestDB(t, func(db *sqlx.DB) {
+		// First create a different user
+		differentUser, err := fixtures.DefaultUser().
+			WithEmail("different@example.com").
+			WithUsername("different_user").
+			Create(context.Background(), db)
+		require.NoError(t, err)
+
+		chainName := fmt.Sprintf("Unauthorized Test Chain %d", time.Now().UnixNano())
+
+		chainFixture := fixtures.DefaultChain(differentUser.ID)
+		chainFixture.ChainName = chainName
+		chain, err := chainFixture.
+			WithTokenSymbol("UNAUTH").
+			Create(context.Background(), db)
+		require.NoError(t, err)
+		chainID = chain.ID
+
+		t.Cleanup(func() {
+			db.ExecContext(context.Background(),
+				"DELETE FROM chains WHERE id = $1", chainID)
+			db.ExecContext(context.Background(),
+				"DELETE FROM users WHERE id = $1", differentUser.ID)
+		})
+
+		t.Logf("Created chain owned by different user: %s", chainID)
+	})
+
+	client := testutils.NewTestClient()
+
+	// Try to update the description with the test user (who doesn't own the chain)
+	updateRequest := map[string]interface{}{
+		"chain_description": "Attempting unauthorized update",
+	}
+
+	updatePath := testutils.GetAPIPath(fmt.Sprintf("/chains/%s/description", chainID))
+	resp, body := client.Put(t, updatePath, updateRequest)
+
+	// Should get forbidden or unauthorized
+	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 403 or 401, got %d. Body: %s", resp.StatusCode, string(body))
+	}
+
+	t.Logf("Successfully prevented unauthorized update")
+}
+
+// TestUpdateChainDescriptionNonexistent tests updating a chain that doesn't exist
+func TestUpdateChainDescriptionNonexistent(t *testing.T) {
+	client := testutils.NewTestClient()
+
+	// Use a random UUID that doesn't exist
+	nonexistentID := uuid.New()
+
+	updateRequest := map[string]interface{}{
+		"chain_description": "This won't work",
+	}
+
+	updatePath := testutils.GetAPIPath(fmt.Sprintf("/chains/%s/description", nonexistentID))
+	resp, body := client.Put(t, updatePath, updateRequest)
+
+	// Should get not found
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("Expected status 404, got %d. Body: %s", resp.StatusCode, string(body))
+	}
+
+	t.Logf("Successfully handled nonexistent chain")
+}

@@ -18,6 +18,8 @@ var (
 	ErrChainAlreadyExists    = errors.New("chain already exists")
 	ErrChainNotInDraftStatus = errors.New("chain is not in draft status")
 	ErrUnauthorized          = errors.New("unauthorized")
+	ErrRepositoryNotFound    = errors.New("repository not found")
+	ErrAssetNotFound         = errors.New("asset not found")
 )
 
 type ChainService struct {
@@ -395,6 +397,88 @@ func (s *ChainService) DeleteChain(ctx context.Context, chainID string, userID s
 	return nil
 }
 
+// UpdateChainDescription updates the description of a chain
+func (s *ChainService) UpdateChainDescription(ctx context.Context, chainID string, userID string, req *models.UpdateChainDescriptionRequest) (*models.Chain, error) {
+	// Validate ownership
+	chain, err := s.getChainAndValidateOwnership(ctx, chainID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update description
+	err = s.chainRepo.UpdateDescription(ctx, chain.ID, req.ChainDescription)
+	if err != nil {
+		if err.Error() == "chain not found" {
+			return nil, ErrChainNotFound
+		}
+		return nil, fmt.Errorf("failed to update chain description: %w", err)
+	}
+
+	// Return updated chain
+	return s.chainRepo.GetByID(ctx, chain.ID, nil)
+}
+
+// GetRepositoryByChainID retrieves a GitHub repository by chain ID
+func (s *ChainService) GetRepositoryByChainID(ctx context.Context, chainID string, userID string) (*models.ChainRepository, error) {
+	chain, err := s.getChainAndValidateOwnership(ctx, chainID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	repo, err := s.chainRepo.GetRepositoryByChainID(ctx, chain.ID)
+	if err != nil {
+		if err.Error() == "repository not found" {
+			return nil, ErrRepositoryNotFound
+		}
+		return nil, fmt.Errorf("failed to get repository: %w", err)
+	}
+
+	return repo, nil
+}
+
+// UpdateRepositoryByChainID updates a GitHub repository by chain ID (partial update)
+func (s *ChainService) UpdateRepositoryByChainID(ctx context.Context, chainID string, userID string, req *models.UpdateChainRepositoryRequest) (*models.ChainRepository, error) {
+	// Validate ownership
+	chain, err := s.getChainAndValidateOwnership(ctx, chainID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get existing repository
+	existingRepo, err := s.chainRepo.GetRepositoryByChainID(ctx, chain.ID)
+	if err != nil {
+		if err.Error() == "repository not found" {
+			return nil, ErrRepositoryNotFound
+		}
+		return nil, fmt.Errorf("failed to get repository: %w", err)
+	}
+
+	// Apply partial updates
+	if req.GithubURL != nil {
+		existingRepo.GithubURL = *req.GithubURL
+	}
+	if req.RepositoryName != nil {
+		existingRepo.RepositoryName = *req.RepositoryName
+	}
+	if req.RepositoryOwner != nil {
+		existingRepo.RepositoryOwner = *req.RepositoryOwner
+	}
+	if req.DefaultBranch != nil {
+		existingRepo.DefaultBranch = *req.DefaultBranch
+	}
+
+	// Update in database
+	updatedRepo, err := s.chainRepo.UpdateRepository(ctx, existingRepo)
+	if err != nil {
+		if err.Error() == "repository not found" {
+			return nil, ErrRepositoryNotFound
+		}
+		return nil, fmt.Errorf("failed to update repository: %w", err)
+	}
+
+	return updatedRepo, nil
+}
+
 // GetTransactions retrieves virtual pool transactions for a chain
 func (s *ChainService) GetTransactions(ctx context.Context, chainID string, userID, transactionType string, page, limit int) ([]models.VirtualPoolTransaction, *models.Pagination, error) {
 	chainUUID, err := uuid.Parse(chainID)
@@ -529,4 +613,166 @@ func extractRepoOwner(githubURL string) string {
 		return parts[len(parts)-2]
 	}
 	return ""
+}
+
+// GetAssets retrieves all assets for a chain
+func (s *ChainService) GetAssets(ctx context.Context, chainID string, userID string) ([]models.ChainAsset, error) {
+	chain, err := s.getChainAndValidateOwnership(ctx, chainID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	assets, err := s.chainRepo.GetAssetsByChainID(ctx, chain.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assets: %w", err)
+	}
+
+	return assets, nil
+}
+
+// CreateAsset creates a new asset for a chain
+func (s *ChainService) CreateAsset(ctx context.Context, chainID string, userID string, req *models.CreateChainAssetRequest) (*models.ChainAsset, error) {
+	// Validate ownership
+	chain, err := s.getChainAndValidateOwnership(ctx, chainID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse user ID for uploaded_by
+	uploadedByUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	// If no display order provided, get the next available order
+	displayOrder := s.getIntValueOrDefault(req.DisplayOrder, 0)
+	if req.DisplayOrder == nil {
+		existingAssets, err := s.chainRepo.GetAssetsByChainID(ctx, chain.ID)
+		if err == nil {
+			displayOrder = len(existingAssets)
+		}
+	}
+
+	// Create asset
+	asset := models.ChainAsset{
+		ChainID:          chain.ID,
+		AssetType:        req.AssetType,
+		FileName:         req.FileName,
+		FileURL:          req.FileURL,
+		FileSizeBytes:    req.FileSizeBytes,
+		MimeType:         req.MimeType,
+		Title:            req.Title,
+		Description:      req.Description,
+		AltText:          req.AltText,
+		DisplayOrder:     displayOrder,
+		IsPrimary:        s.getBoolValueOrDefault(req.IsPrimary, false),
+		IsFeatured:       s.getBoolValueOrDefault(req.IsFeatured, false),
+		IsActive:         true,
+		ModerationStatus: "pending",
+		UploadedBy:       uploadedByUUID,
+	}
+
+	// Create asset in database
+	err = s.chainRepo.CreateAssets(ctx, chain.ID, []models.ChainAsset{asset})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create asset: %w", err)
+	}
+
+	// Get the created asset by querying all assets and finding the matching one
+	assets, err := s.chainRepo.GetAssetsByChainID(ctx, chain.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve created asset: %w", err)
+	}
+
+	// Find the newly created asset (last one with matching properties)
+	for i := len(assets) - 1; i >= 0; i-- {
+		if assets[i].AssetType == req.AssetType &&
+			assets[i].FileName == req.FileName &&
+			assets[i].FileURL == req.FileURL {
+			return &assets[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to retrieve created asset")
+}
+
+// UpdateAsset updates an existing asset for a chain
+func (s *ChainService) UpdateAsset(ctx context.Context, chainID string, assetID string, userID string, req *models.UpdateChainAssetRequest) (*models.ChainAsset, error) {
+	// Validate ownership
+	chain, err := s.getChainAndValidateOwnership(ctx, chainID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse asset ID
+	assetUUID, err := uuid.Parse(assetID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid asset ID: %w", err)
+	}
+
+	// Get existing asset
+	existingAsset, err := s.chainRepo.GetAssetByID(ctx, assetUUID)
+	if err != nil {
+		if err.Error() == "asset not found" {
+			return nil, ErrAssetNotFound
+		}
+		return nil, fmt.Errorf("failed to get asset: %w", err)
+	}
+
+	// Verify the asset belongs to this chain
+	if existingAsset.ChainID != chain.ID {
+		return nil, ErrAssetNotFound
+	}
+
+	// Apply partial updates
+	if req.FileName != nil {
+		existingAsset.FileName = *req.FileName
+	}
+	if req.FileURL != nil {
+		existingAsset.FileURL = *req.FileURL
+	}
+	if req.FileSizeBytes != nil {
+		existingAsset.FileSizeBytes = req.FileSizeBytes
+	}
+	if req.MimeType != nil {
+		existingAsset.MimeType = req.MimeType
+	}
+	if req.Title != nil {
+		existingAsset.Title = req.Title
+	}
+	if req.Description != nil {
+		existingAsset.Description = req.Description
+	}
+	if req.AltText != nil {
+		existingAsset.AltText = req.AltText
+	}
+	if req.DisplayOrder != nil {
+		existingAsset.DisplayOrder = *req.DisplayOrder
+	}
+	if req.IsPrimary != nil {
+		existingAsset.IsPrimary = *req.IsPrimary
+	}
+	if req.IsFeatured != nil {
+		existingAsset.IsFeatured = *req.IsFeatured
+	}
+	if req.IsActive != nil {
+		existingAsset.IsActive = *req.IsActive
+	}
+	if req.ModerationStatus != nil {
+		existingAsset.ModerationStatus = *req.ModerationStatus
+	}
+	if req.ModerationNotes != nil {
+		existingAsset.ModerationNotes = req.ModerationNotes
+	}
+
+	// Update in database
+	err = s.chainRepo.UpdateAsset(ctx, existingAsset)
+	if err != nil {
+		if err.Error() == "asset not found" {
+			return nil, ErrAssetNotFound
+		}
+		return nil, fmt.Errorf("failed to update asset: %w", err)
+	}
+
+	return existingAsset, nil
 }

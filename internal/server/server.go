@@ -118,7 +118,7 @@ func (s *Server) setupRoutes() {
 	}
 
 	// Create auth middleware
-	authMiddleware := custommiddleware.AuthMiddleware(s.Services.AuthService)
+	authMiddleware := custommiddleware.AuthMiddleware(s.Services.AuthService) // authMiddleware disabled for now
 
 	// API v1 routes
 	s.Router.Route("/api/v1", func(r chi.Router) {
@@ -137,9 +137,13 @@ func (s *Server) setupRoutes() {
 
 		// Protected routes (authentication required)
 		r.Group(func(r chi.Router) {
-			// Use the new session token authentication middleware
-			// TODO disabled for now
-			// r.Use(authMiddleware)
+			// Use mock authentication for development/testing
+			// Use session token authentication in production only
+			if !s.Config.IsProduction() {
+				r.Use(custommiddleware.MockAuthMiddleware())
+			} else {
+				r.Use(authMiddleware)
+			}
 
 			// Auth/session management routes
 			r.Route("/auth", func(r chi.Router) {
@@ -166,14 +170,19 @@ func (s *Server) setupRoutes() {
 			r.Route("/chains/{id}", func(r chi.Router) {
 				r.Get("/", s.Handlers.ChainHandler.GetChain)
 				r.Delete("/", s.Handlers.ChainHandler.DeleteChain)
+				r.Put("/description", s.Handlers.ChainHandler.UpdateChainDescription)
 
-				r.Route("/{id}", func(r chi.Router) {
-					r.Get("/", s.Handlers.ChainHandler.GetChain)
-					r.Delete("/", s.Handlers.ChainHandler.DeleteChain)
+				// Repository endpoints
+				r.Get("/repository", s.Handlers.ChainHandler.GetRepository)
+				r.Put("/repository", s.Handlers.ChainHandler.UpdateRepository)
 
-					// Virtual pool endpoints
-					r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
-				})
+				// Assets endpoints
+				r.Get("/assets", s.Handlers.ChainHandler.GetAssets)
+				r.Post("/assets", s.Handlers.ChainHandler.CreateAsset)
+				r.Put("/assets/{asset_id}", s.Handlers.ChainHandler.UpdateAsset)
+
+				// Virtual pool endpoints
+				r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
 			})
 
 			// Wallet routes

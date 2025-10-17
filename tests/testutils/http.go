@@ -55,6 +55,11 @@ func (c *TestClient) Post(t *testing.T, path string, body interface{}) (*http.Re
 	return c.DoRequest(t, "POST", path, body)
 }
 
+// Put performs a PUT request with JSON body
+func (c *TestClient) Put(t *testing.T, path string, body interface{}) (*http.Response, []byte) {
+	return c.DoRequest(t, "PUT", path, body)
+}
+
 // Delete performs a DELETE request
 func (c *TestClient) Delete(t *testing.T, path string) (*http.Response, []byte) {
 	return c.DoRequest(t, "DELETE", path, nil)

@@ -641,6 +641,238 @@ func (t *VirtualPoolTransactionFixture) Create(ctx context.Context, db sqlx.ExtC
 	return transaction, nil
 }
 
+// ChainRepositoryFixture provides test chain repository creation
+type ChainRepositoryFixture struct {
+	ChainID            uuid.UUID
+	GithubURL          string
+	RepositoryName     string
+	RepositoryOwner    string
+	DefaultBranch      string
+	IsConnected        bool
+	AutoUpgradeEnabled bool
+	UpgradeTrigger     string
+	BuildStatus        string
+}
+
+// DefaultChainRepository returns a chain repository fixture with default values
+func DefaultChainRepository(chainID uuid.UUID) *ChainRepositoryFixture {
+	return &ChainRepositoryFixture{
+		ChainID:            chainID,
+		GithubURL:          "https://github.com/test-owner/test-repo",
+		RepositoryName:     "test-repo",
+		RepositoryOwner:    "test-owner",
+		DefaultBranch:      "main",
+		IsConnected:        false,
+		AutoUpgradeEnabled: true,
+		UpgradeTrigger:     models.UpgradeTriggerTagRelease,
+		BuildStatus:        models.BuildStatusPending,
+	}
+}
+
+// WithGithubURL sets the GitHub URL
+func (r *ChainRepositoryFixture) WithGithubURL(url string) *ChainRepositoryFixture {
+	r.GithubURL = url
+	return r
+}
+
+// WithRepositoryName sets the repository name
+func (r *ChainRepositoryFixture) WithRepositoryName(name string) *ChainRepositoryFixture {
+	r.RepositoryName = name
+	return r
+}
+
+// WithRepositoryOwner sets the repository owner
+func (r *ChainRepositoryFixture) WithRepositoryOwner(owner string) *ChainRepositoryFixture {
+	r.RepositoryOwner = owner
+	return r
+}
+
+// WithBuildStatus sets the build status
+func (r *ChainRepositoryFixture) WithBuildStatus(status string) *ChainRepositoryFixture {
+	r.BuildStatus = status
+	return r
+}
+
+// WithDefaultBranch sets the default branch
+func (r *ChainRepositoryFixture) WithDefaultBranch(branch string) *ChainRepositoryFixture {
+	r.DefaultBranch = branch
+	return r
+}
+
+// Create persists the chain repository to the database
+func (r *ChainRepositoryFixture) Create(ctx context.Context, db sqlx.ExtContext) (*models.ChainRepository, error) {
+	query := `
+		INSERT INTO chain_repositories (
+			chain_id, github_url, repository_name, repository_owner, default_branch,
+			is_connected, auto_upgrade_enabled, upgrade_trigger, build_status
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, created_at, updated_at
+	`
+
+	repository := &models.ChainRepository{
+		ChainID:            r.ChainID,
+		GithubURL:          r.GithubURL,
+		RepositoryName:     r.RepositoryName,
+		RepositoryOwner:    r.RepositoryOwner,
+		DefaultBranch:      r.DefaultBranch,
+		IsConnected:        r.IsConnected,
+		AutoUpgradeEnabled: r.AutoUpgradeEnabled,
+		UpgradeTrigger:     r.UpgradeTrigger,
+		BuildStatus:        r.BuildStatus,
+	}
+
+	result := struct {
+		ID        uuid.UUID `db:"id"`
+		CreatedAt time.Time `db:"created_at"`
+		UpdatedAt time.Time `db:"updated_at"`
+	}{}
+
+	err := sqlx.GetContext(ctx, db, &result, query,
+		repository.ChainID, repository.GithubURL, repository.RepositoryName,
+		repository.RepositoryOwner, repository.DefaultBranch, repository.IsConnected,
+		repository.AutoUpgradeEnabled, repository.UpgradeTrigger, repository.BuildStatus)
+
+	if err != nil {
+		return nil, err
+	}
+
+	repository.ID = result.ID
+	repository.CreatedAt = result.CreatedAt
+	repository.UpdatedAt = result.UpdatedAt
+
+	return repository, nil
+}
+
+// ChainAssetFixture provides test chain asset creation
+type ChainAssetFixture struct {
+	ChainID          uuid.UUID
+	AssetType        string
+	FileName         string
+	FileURL          string
+	FileSizeBytes    *int64
+	MimeType         *string
+	Title            *string
+	Description      *string
+	AltText          *string
+	DisplayOrder     int
+	IsPrimary        bool
+	IsFeatured       bool
+	IsActive         bool
+	ModerationStatus string
+	UploadedBy       uuid.UUID
+}
+
+// DefaultChainAsset returns a chain asset fixture with default values
+func DefaultChainAsset(chainID, uploadedBy uuid.UUID) *ChainAssetFixture {
+	sizeBytes := int64(12345)
+	mimeType := "image/png"
+	title := "Test Asset"
+	description := "Test asset for integration tests"
+	altText := "Test asset alt text"
+
+	return &ChainAssetFixture{
+		ChainID:          chainID,
+		AssetType:        models.AssetTypeLogo,
+		FileName:         "test-logo.png",
+		FileURL:          "https://cdn.example.com/test-logo.png",
+		FileSizeBytes:    &sizeBytes,
+		MimeType:         &mimeType,
+		Title:            &title,
+		Description:      &description,
+		AltText:          &altText,
+		DisplayOrder:     0,
+		IsPrimary:        true,
+		IsFeatured:       true,
+		IsActive:         true,
+		ModerationStatus: "pending",
+		UploadedBy:       uploadedBy,
+	}
+}
+
+// WithAssetType sets the asset type
+func (a *ChainAssetFixture) WithAssetType(assetType string) *ChainAssetFixture {
+	a.AssetType = assetType
+	return a
+}
+
+// WithFileName sets the file name
+func (a *ChainAssetFixture) WithFileName(fileName string) *ChainAssetFixture {
+	a.FileName = fileName
+	return a
+}
+
+// WithFileURL sets the file URL
+func (a *ChainAssetFixture) WithFileURL(fileURL string) *ChainAssetFixture {
+	a.FileURL = fileURL
+	return a
+}
+
+// WithModerationStatus sets the moderation status
+func (a *ChainAssetFixture) WithModerationStatus(status string) *ChainAssetFixture {
+	a.ModerationStatus = status
+	return a
+}
+
+// WithDisplayOrder sets the display order
+func (a *ChainAssetFixture) WithDisplayOrder(order int) *ChainAssetFixture {
+	a.DisplayOrder = order
+	return a
+}
+
+// Create persists the chain asset to the database
+func (a *ChainAssetFixture) Create(ctx context.Context, db sqlx.ExtContext) (*models.ChainAsset, error) {
+	query := `
+		INSERT INTO chain_assets (
+			chain_id, asset_type, file_name, file_url, file_size_bytes, mime_type,
+			title, description, alt_text, display_order, is_primary, is_featured,
+			is_active, moderation_status, uploaded_by
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		RETURNING id, created_at, updated_at
+	`
+
+	asset := &models.ChainAsset{
+		ChainID:          a.ChainID,
+		AssetType:        a.AssetType,
+		FileName:         a.FileName,
+		FileURL:          a.FileURL,
+		FileSizeBytes:    a.FileSizeBytes,
+		MimeType:         a.MimeType,
+		Title:            a.Title,
+		Description:      a.Description,
+		AltText:          a.AltText,
+		DisplayOrder:     a.DisplayOrder,
+		IsPrimary:        a.IsPrimary,
+		IsFeatured:       a.IsFeatured,
+		IsActive:         a.IsActive,
+		ModerationStatus: a.ModerationStatus,
+		UploadedBy:       a.UploadedBy,
+	}
+
+	result := struct {
+		ID        uuid.UUID `db:"id"`
+		CreatedAt time.Time `db:"created_at"`
+		UpdatedAt time.Time `db:"updated_at"`
+	}{}
+
+	err := sqlx.GetContext(ctx, db, &result, query,
+		asset.ChainID, asset.AssetType, asset.FileName, asset.FileURL,
+		asset.FileSizeBytes, asset.MimeType, asset.Title, asset.Description,
+		asset.AltText, asset.DisplayOrder, asset.IsPrimary, asset.IsFeatured,
+		asset.IsActive, asset.ModerationStatus, asset.UploadedBy)
+
+	if err != nil {
+		return nil, err
+	}
+
+	asset.ID = result.ID
+	asset.CreatedAt = result.CreatedAt
+	asset.UpdatedAt = result.UpdatedAt
+
+	return asset, nil
+}
+
 // SampleDataIDs contains UUIDs from sample_data.sql for reference
 var SampleDataIDs = struct {
 	Users struct {

@@ -113,3 +113,50 @@ type WalletsQueryParams struct {
 	Page      int    `form:"page" validate:"omitempty,min=1"`
 	Limit     int    `form:"limit" validate:"omitempty,min=1,max=100"`
 }
+
+// UpdateChainRepositoryRequest represents the request payload for updating a chain repository
+// All fields are optional to support partial updates
+type UpdateChainRepositoryRequest struct {
+	GithubURL       *string `json:"github_url" validate:"omitempty,url"`
+	RepositoryName  *string `json:"repository_name" validate:"omitempty,min=1,max=100"`
+	RepositoryOwner *string `json:"repository_owner" validate:"omitempty,min=1,max=100"`
+	DefaultBranch   *string `json:"default_branch" validate:"omitempty,min=1,max=100"`
+}
+
+// CreateChainAssetRequest represents the request payload for creating a new chain asset
+type CreateChainAssetRequest struct {
+	AssetType     string  `json:"asset_type" validate:"required,oneof=logo banner screenshot video whitepaper documentation"`
+	FileName      string  `json:"file_name" validate:"required,min=1,max=255"`
+	FileURL       string  `json:"file_url" validate:"required,url"`
+	FileSizeBytes *int64  `json:"file_size_bytes" validate:"omitempty,min=1"`
+	MimeType      *string `json:"mime_type" validate:"omitempty,max=100"`
+	Title         *string `json:"title" validate:"omitempty,max=200"`
+	Description   *string `json:"description" validate:"omitempty,max=1000"`
+	AltText       *string `json:"alt_text" validate:"omitempty,max=500"`
+	DisplayOrder  *int    `json:"display_order" validate:"omitempty,min=0"`
+	IsPrimary     *bool   `json:"is_primary"`
+	IsFeatured    *bool   `json:"is_featured"`
+}
+
+// UpdateChainAssetRequest represents the request payload for updating a chain asset
+// All fields are optional to support partial updates
+type UpdateChainAssetRequest struct {
+	FileName         *string `json:"file_name" validate:"omitempty,min=1,max=255"`
+	FileURL          *string `json:"file_url" validate:"omitempty,url"`
+	FileSizeBytes    *int64  `json:"file_size_bytes" validate:"omitempty,min=1"`
+	MimeType         *string `json:"mime_type" validate:"omitempty,max=100"`
+	Title            *string `json:"title" validate:"omitempty,max=200"`
+	Description      *string `json:"description" validate:"omitempty,max=1000"`
+	AltText          *string `json:"alt_text" validate:"omitempty,max=500"`
+	DisplayOrder     *int    `json:"display_order" validate:"omitempty,min=0"`
+	IsPrimary        *bool   `json:"is_primary"`
+	IsFeatured       *bool   `json:"is_featured"`
+	IsActive         *bool   `json:"is_active"`
+	ModerationStatus *string `json:"moderation_status" validate:"omitempty,oneof=pending approved rejected"`
+	ModerationNotes  *string `json:"moderation_notes" validate:"omitempty,max=1000"`
+}
+
+// UpdateChainDescriptionRequest represents the request payload for updating a chain's description
+type UpdateChainDescriptionRequest struct {
+	ChainDescription string `json:"chain_description" validate:"required,max=5000"`
+}

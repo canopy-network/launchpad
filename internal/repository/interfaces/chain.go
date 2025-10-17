@@ -15,6 +15,7 @@ type ChainRepository interface {
 	GetByName(ctx context.Context, name string) (*models.Chain, error)
 	GetByAddress(ctx context.Context, address string) (*models.Chain, error)
 	Update(ctx context.Context, chain *models.Chain) (*models.Chain, error)
+	UpdateDescription(ctx context.Context, id uuid.UUID, description string) error
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// Chain listing and filtering
@@ -39,6 +40,8 @@ type ChainRepository interface {
 	CreateAssets(ctx context.Context, chainID uuid.UUID, assets []models.ChainAsset) error
 	UpdateAssets(ctx context.Context, chainID uuid.UUID, assets []models.ChainAsset) error
 	GetAssetsByChainID(ctx context.Context, chainID uuid.UUID) ([]models.ChainAsset, error)
+	GetAssetByID(ctx context.Context, assetID uuid.UUID) (*models.ChainAsset, error)
+	UpdateAsset(ctx context.Context, asset *models.ChainAsset) error
 	DeleteAssetsByChainID(ctx context.Context, chainID uuid.UUID) error
 
 	// Chain key operations
