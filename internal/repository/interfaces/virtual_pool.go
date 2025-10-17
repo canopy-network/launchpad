@@ -29,12 +29,6 @@ type VirtualPoolRepository interface {
 	GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]UserPositionWithAddress, error)
 }
 
-// UserPositionWithAddress contains position data with user's wallet address
-type UserPositionWithAddress struct {
-	WalletAddress string
-	TokenBalance  int64
-}
-
 // PoolStateUpdate represents the fields to update in a virtual pool
 type PoolStateUpdate struct {
 	CNPYReserve        *big.Float

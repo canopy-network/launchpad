@@ -48,3 +48,9 @@ type UserFilters struct {
 	IsVerified       *bool
 	MinReputation    *int
 }
+
+// UserPositionWithAddress contains position data with user's wallet address
+type UserPositionWithAddress struct {
+	WalletAddress string
+	TokenBalance  int64
+}g
