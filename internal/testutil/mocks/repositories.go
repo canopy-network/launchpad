@@ -57,6 +57,11 @@ func (m *MockChainRepository) Update(ctx context.Context, chain *models.Chain) (
 	return args.Get(0).(*models.Chain), args.Error(1)
 }
 
+func (m *MockChainRepository) UpdateDescription(ctx context.Context, id uuid.UUID, description string) error {
+	args := m.Called(ctx, id, description)
+	return args.Error(0)
+}
+
 func (m *MockChainRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -144,6 +149,19 @@ func (m *MockChainRepository) UpdateAssets(ctx context.Context, chainID uuid.UUI
 func (m *MockChainRepository) GetAssetsByChainID(ctx context.Context, chainID uuid.UUID) ([]models.ChainAsset, error) {
 	args := m.Called(ctx, chainID)
 	return args.Get(0).([]models.ChainAsset), args.Error(1)
+}
+
+func (m *MockChainRepository) GetAssetByID(ctx context.Context, assetID uuid.UUID) (*models.ChainAsset, error) {
+	args := m.Called(ctx, assetID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.ChainAsset), args.Error(1)
+}
+
+func (m *MockChainRepository) UpdateAsset(ctx context.Context, asset *models.ChainAsset) error {
+	args := m.Called(ctx, asset)
+	return args.Error(0)
 }
 
 func (m *MockChainRepository) DeleteAssetsByChainID(ctx context.Context, chainID uuid.UUID) error {
