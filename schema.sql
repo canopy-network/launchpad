@@ -40,6 +40,43 @@ CREATE TABLE users (
     last_active_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Session tokens for authenticated user sessions
+-- Stores hashed authentication tokens with device metadata and expiration tracking
+-- Supports session management features (view active sessions, revoke specific sessions)
+-- Integrates with users.jwt_version for global token invalidation on security events
+CREATE TABLE session_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Token storage (NEVER store plaintext tokens)
+    token_hash VARCHAR(64) NOT NULL UNIQUE, -- SHA-256 hash of the token
+    token_prefix VARCHAR(8) NOT NULL, -- First 8 characters for display/identification
+
+    -- Session metadata
+    user_agent TEXT, -- Browser/client user agent string
+    ip_address INET, -- IP address of the client
+    device_name VARCHAR(200), -- Optional friendly device name (e.g., "Chrome on MacBook")
+
+    -- Token lifecycle
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_used_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    -- Revocation support
+    is_revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    revoked_at TIMESTAMP WITH TIME ZONE,
+    revocation_reason VARCHAR(100), -- 'user_logout', 'security_event', 'admin_action', 'expired'
+
+    -- Security integration
+    jwt_version_snapshot INTEGER NOT NULL, -- Snapshot of user's jwt_version at creation
+
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+
+    -- Ensure token hash is globally unique
+    CONSTRAINT unique_token_hash UNIQUE (token_hash)
+);
+
 -- Pre-built blockchain templates that developers can use as starting points
 -- Contains the technical specifications and default configurations for different chain types
 CREATE TABLE chain_templates (
@@ -357,6 +394,7 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_chains_updated_at BEFORE UPDATE ON chains FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_templates_updated_at BEFORE UPDATE ON chain_templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_session_tokens_updated_at BEFORE UPDATE ON session_tokens FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_repos_updated_at BEFORE UPDATE ON chain_repositories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_social_updated_at BEFORE UPDATE ON chain_social_links FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_pools_updated_at BEFORE UPDATE ON virtual_pools FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -380,6 +418,13 @@ CREATE INDEX idx_templates_active ON chain_templates (is_active);
 CREATE INDEX idx_users_wallet ON users (wallet_address);
 CREATE INDEX idx_users_github ON users (github_username);
 CREATE INDEX idx_users_reputation ON users (reputation_score DESC);
+
+-- Indexes for session_tokens table
+CREATE INDEX idx_session_tokens_user ON session_tokens (user_id);
+CREATE INDEX idx_session_tokens_hash ON session_tokens (token_hash);
+CREATE INDEX idx_session_tokens_active ON session_tokens (user_id, is_revoked, expires_at) WHERE is_revoked = FALSE;
+CREATE INDEX idx_session_tokens_expires ON session_tokens (expires_at) WHERE is_revoked = FALSE;
+CREATE INDEX idx_session_tokens_cleanup ON session_tokens (is_revoked, expires_at); -- For cleanup queries
 
 -- Indexes for chain_repositories table
 CREATE INDEX idx_repos_chain ON chain_repositories (chain_id);

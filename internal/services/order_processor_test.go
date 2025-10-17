@@ -183,6 +183,32 @@ func (m *MockUserRepository) UpdateLastActive(ctx context.Context, userID uuid.U
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) CreateOrGetByEmail(ctx context.Context, email string) (*models.User, bool, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Bool(1), args.Error(2)
+	}
+	return args.Get(0).(*models.User), args.Bool(1), args.Error(2)
+}
+
+func (m *MockUserRepository) MarkEmailVerified(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) IncrementJWTVersion(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) UpdateProfile(ctx context.Context, userID uuid.UUID, req *models.UpdateProfileRequest) (*models.User, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 func TestNewOrderProcessor(t *testing.T) {
 	poolRepo := new(MockVirtualPoolRepository)
 	userRepo := new(MockUserRepository)
@@ -210,9 +236,9 @@ func TestValidateOrder(t *testing.T) {
 
 	t.Run("valid buy order", func(t *testing.T) {
 		order := &lib.SellOrder{
-			AmountForSale:        1000,
-			RequestedAmount:      80000,
-			BuyerReceiveAddress:  []byte(uuid.New().String()),
+			AmountForSale:       1000,
+			RequestedAmount:     80000,
+			BuyerReceiveAddress: []byte(uuid.New().String()),
 		}
 		err := processor.validateOrder(order)
 		assert.NoError(t, err)
@@ -253,12 +279,12 @@ func TestProcessBuyOrder(t *testing.T) {
 	poolID := uuid.New()
 
 	pool := &models.VirtualPool{
-		ID:           poolID,
-		ChainID:      chainID,
-		CNPYReserve:  10000.0,
-		TokenReserve: 800000000,
-		CurrentPriceCNPY: 0.0000125,
-		TotalVolumeCNPY: 5000.0,
+		ID:                poolID,
+		ChainID:           chainID,
+		CNPYReserve:       10000.0,
+		TokenReserve:      800000000,
+		CurrentPriceCNPY:  0.0000125,
+		TotalVolumeCNPY:   5000.0,
 		TotalTransactions: 10,
 	}
 
@@ -324,12 +350,12 @@ func TestProcessSellOrder(t *testing.T) {
 	poolID := uuid.New()
 
 	pool := &models.VirtualPool{
-		ID:           poolID,
-		ChainID:      chainID,
-		CNPYReserve:  10000.0,
-		TokenReserve: 800000000,
-		CurrentPriceCNPY: 0.0000125,
-		TotalVolumeCNPY: 5000.0,
+		ID:                poolID,
+		ChainID:           chainID,
+		CNPYReserve:       10000.0,
+		TokenReserve:      800000000,
+		CurrentPriceCNPY:  0.0000125,
+		TotalVolumeCNPY:   5000.0,
 		TotalTransactions: 10,
 	}
 

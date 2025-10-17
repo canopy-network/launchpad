@@ -70,6 +70,7 @@ Complete API reference for the Launchpad blockchain creation and management plat
 - [Endpoints](#endpoints)
   - [Health & Status](#health--status)
   - [Authentication Endpoints](#authentication-endpoints)
+  - [User Management](#user-management)
   - [Templates](#templates)
   - [Chains](#chains)
   - [Virtual Pools](#virtual-pools)
@@ -345,6 +346,201 @@ curl -X POST http://localhost:3001/api/v1/auth/verify \
 - In production, this endpoint will return a JWT token for subsequent authenticated requests
 - Current implementation returns only a success message (JWT implementation pending)
 - No authentication required (public endpoint)
+
+---
+
+### User Management
+
+#### `PUT /api/v1/users/profile`
+
+**Description:** Updates the authenticated user's profile information. All fields are optional, allowing partial updates.
+
+**Authentication:** Required (Session token via cookie or X-User-ID header)
+
+**Request Body:**
+```json
+{
+  "username": "string (optional, 3-50 chars, alphanumeric only)",
+  "display_name": "string (optional, max 100 chars)",
+  "bio": "string (optional, max 500 chars)",
+  "avatar_url": "string (optional, valid URL, max 500 chars)",
+  "website_url": "string (optional, valid URL, max 500 chars)",
+  "twitter_handle": "string (optional, max 50 chars)",
+  "github_username": "string (optional, max 100 chars, alphanumeric only)",
+  "telegram_handle": "string (optional, max 50 chars)"
+}
+```
+
+**Validation Constraints:**
+- `username`: Optional, 3-50 characters, alphanumeric only (letters and numbers)
+- `display_name`: Optional, maximum 100 characters
+- `bio`: Optional, maximum 500 characters
+- `avatar_url`: Optional, must be valid URL format, maximum 500 characters
+- `website_url`: Optional, must be valid URL format, maximum 500 characters
+- `twitter_handle`: Optional, maximum 50 characters
+- `github_username`: Optional, maximum 100 characters, alphanumeric only
+- `telegram_handle`: Optional, maximum 50 characters
+
+**Response:**
+- **Success (200):**
+  ```json
+  {
+    "data": {
+      "user": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "wallet_address": "0x1234567890abcdef...",
+        "email": "user@example.com",
+        "username": "johndoe",
+        "display_name": "John Doe",
+        "bio": "Blockchain enthusiast and developer",
+        "avatar_url": "https://example.com/avatar.jpg",
+        "website_url": "https://johndoe.com",
+        "twitter_handle": "@johndoe",
+        "github_username": "johndoe",
+        "telegram_handle": "@johndoe",
+        "is_verified": true,
+        "verification_tier": "verified",
+        "total_chains_created": 5,
+        "total_cnpy_invested": 12500.50,
+        "reputation_score": 850,
+        "created_at": "2024-01-01T00:00:00Z"
+      },
+      "message": "Profile updated successfully"
+    }
+  }
+  ```
+
+- **Error (400) - No fields provided:**
+  ```json
+  {
+    "error": {
+      "code": "BAD_REQUEST",
+      "message": "No fields provided to update"
+    }
+  }
+  ```
+
+- **Error (400) - Validation failed:**
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Validation failed",
+      "details": [
+        {
+          "field": "username",
+          "message": "must be between 3 and 50 characters"
+        },
+        {
+          "field": "avatar_url",
+          "message": "must be a valid URL"
+        }
+      ]
+    }
+  }
+  ```
+
+- **Error (401) - Not authenticated:**
+  ```json
+  {
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "User not authenticated"
+    }
+  }
+  ```
+
+- **Error (404) - User not found:**
+  ```json
+  {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "User not found"
+    }
+  }
+  ```
+
+- **Error (409) - Username conflict:**
+  ```json
+  {
+    "error": {
+      "code": "CONFLICT",
+      "message": "Username is already taken"
+    }
+  }
+  ```
+
+- **Error (500) - Server error:**
+  ```json
+  {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Failed to update profile"
+    }
+  }
+  ```
+
+**Example Request:**
+```bash
+# Update username and bio
+curl -X PUT http://localhost:3001/api/v1/users/profile \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "username": "johndoe",
+    "bio": "Blockchain enthusiast and developer"
+  }'
+
+# Update social links
+curl -X PUT http://localhost:3001/api/v1/users/profile \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "twitter_handle": "@johndoe",
+    "github_username": "johndoe",
+    "website_url": "https://johndoe.com"
+  }'
+
+# Update display name and avatar
+curl -X PUT http://localhost:3001/api/v1/users/profile \
+  -H "Content-Type: application/json" \
+  -H "X-User-ID: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "display_name": "John Doe",
+    "avatar_url": "https://example.com/avatar.jpg"
+  }'
+```
+
+**User Response Fields:**
+- `id` - UUID identifier for the user
+- `wallet_address` - User's blockchain wallet address (required, immutable)
+- `email` - User's email address (nullable)
+- `username` - Unique username (nullable, alphanumeric)
+- `display_name` - Display name shown in UI (nullable)
+- `bio` - User biography/description (nullable)
+- `avatar_url` - URL to user's avatar image (nullable)
+- `website_url` - User's website URL (nullable)
+- `twitter_handle` - Twitter/X handle (nullable)
+- `github_username` - GitHub username (nullable)
+- `telegram_handle` - Telegram handle (nullable)
+- `is_verified` - Whether user has completed verification
+- `verification_tier` - User verification level: `basic`, `verified`, `premium`
+- `total_chains_created` - Count of chains created by user
+- `total_cnpy_invested` - Total CNPY invested across all chains
+- `reputation_score` - User reputation score based on activity
+- `created_at` - Account creation timestamp (ISO 8601)
+
+**Notes:**
+- User ID is extracted from authentication context (session token or X-User-ID header)
+- All fields are optional; only provided fields will be updated
+- Username must be unique across all users
+- Username and github_username must be alphanumeric (no special characters)
+- URLs are validated for proper format
+- Empty request body will return "No fields provided to update" error
+- The response includes the complete updated user object
+- Email field cannot be updated through this endpoint (managed via auth flow)
+- Wallet address is immutable and cannot be changed
+- Related to User schema in jsonschema.json (`$defs/User`)
 
 ---
 

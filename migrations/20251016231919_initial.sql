@@ -11,9 +11,10 @@ CREATE TABLE "users" (
   "twitter_handle" character varying(50) NULL,
   "github_username" character varying(100) NULL,
   "telegram_handle" character varying(50) NULL,
-  "notification_preferences" jsonb NULL DEFAULT '{"email": false, "browser": true}',
   "is_verified" boolean NOT NULL DEFAULT false,
   "verification_tier" character varying(20) NULL DEFAULT 'basic',
+  "email_verified_at" timestamptz NULL,
+  "jwt_version" integer NOT NULL DEFAULT 0,
   "total_chains_created" integer NOT NULL DEFAULT 0,
   "total_cnpy_invested" numeric(15,8) NOT NULL DEFAULT 0,
   "reputation_score" integer NOT NULL DEFAULT 0,
@@ -39,13 +40,7 @@ CREATE TABLE "chain_templates" (
   "template_description" text NOT NULL,
   "template_category" character varying(50) NOT NULL,
   "supported_language" text NOT NULL,
-  "default_modules" text[] NOT NULL,
-  "required_modules" text[] NOT NULL,
-  "default_consensus" character varying(50) NOT NULL DEFAULT 'tendermint',
   "default_token_supply" bigint NOT NULL DEFAULT 1000000000,
-  "default_validator_count" integer NOT NULL DEFAULT 10,
-  "complexity_level" character varying(20) NOT NULL,
-  "estimated_deployment_time_minutes" integer NOT NULL DEFAULT 30,
   "documentation_url" text NULL,
   "example_chains" text[] NULL,
   "version" character varying(20) NOT NULL DEFAULT '1.0.0',
@@ -53,24 +48,25 @@ CREATE TABLE "chain_templates" (
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY ("id"),
-  CONSTRAINT "chain_templates_template_name_key" UNIQUE ("template_name"),
-  CONSTRAINT "chain_templates_complexity_level_check" CHECK ((complexity_level)::text = ANY ((ARRAY['beginner'::character varying, 'intermediate'::character varying, 'advanced'::character varying])::text[]))
+  CONSTRAINT "chain_templates_template_name_key" UNIQUE ("template_name")
 );
 -- Create index "idx_templates_active" to table: "chain_templates"
 CREATE INDEX "idx_templates_active" ON "chain_templates" ("is_active");
 -- Create index "idx_templates_category" to table: "chain_templates"
 CREATE INDEX "idx_templates_category" ON "chain_templates" ("template_category");
--- Create index "idx_templates_complexity" to table: "chain_templates"
-CREATE INDEX "idx_templates_complexity" ON "chain_templates" ("complexity_level");
 -- Create "chains" table
 CREATE TABLE "chains" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "chain_name" character varying(100) NOT NULL,
+  "token_name" character varying(100) NULL,
   "token_symbol" character varying(20) NOT NULL,
   "chain_description" text NULL,
-  "template_id" uuid NOT NULL,
+  "template_id" uuid NULL,
   "consensus_mechanism" character varying(50) NOT NULL DEFAULT 'nestbft',
   "token_total_supply" bigint NOT NULL DEFAULT 1000000000,
+  "block_time_seconds" integer NULL,
+  "upgrade_block_height" bigint NULL,
+  "block_reward_amount" numeric(15,8) NULL,
   "graduation_threshold" numeric(15,2) NOT NULL DEFAULT 50000.00,
   "creation_fee_cnpy" numeric(15,8) NOT NULL DEFAULT 100.00000000,
   "initial_cnpy_reserve" numeric(15,8) NOT NULL DEFAULT 10000.00000000,
@@ -140,6 +136,36 @@ CREATE INDEX "idx_assets_moderation" ON "chain_assets" ("moderation_status");
 CREATE INDEX "idx_assets_primary" ON "chain_assets" ("is_primary");
 -- Create index "idx_assets_type" to table: "chain_assets"
 CREATE INDEX "idx_assets_type" ON "chain_assets" ("asset_type");
+-- Create "chain_keys" table
+CREATE TABLE "chain_keys" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "chain_id" uuid NOT NULL,
+  "address" text NOT NULL,
+  "public_key" bytea NOT NULL,
+  "encrypted_private_key" text NOT NULL,
+  "salt" bytea NOT NULL,
+  "key_nickname" character varying(100) NULL,
+  "key_purpose" character varying(50) NULL DEFAULT 'chain_operation',
+  "is_active" boolean NOT NULL DEFAULT true,
+  "last_used_at" timestamptz NULL,
+  "rotation_count" integer NOT NULL DEFAULT 0,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY ("id"),
+  CONSTRAINT "chain_keys_address_key" UNIQUE ("address"),
+  CONSTRAINT "chain_keys_chain_id_key_purpose_key" UNIQUE ("chain_id", "key_purpose"),
+  CONSTRAINT "chain_keys_chain_id_fkey" FOREIGN KEY ("chain_id") REFERENCES "chains" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT "chain_keys_key_purpose_check" CHECK ((key_purpose)::text = ANY ((ARRAY['chain_operation'::character varying, 'governance'::character varying, 'treasury'::character varying, 'backup'::character varying])::text[])),
+  CONSTRAINT "chain_keys_salt_check" CHECK (octet_length(salt) = 16)
+);
+-- Create index "idx_chain_keys_active" to table: "chain_keys"
+CREATE INDEX "idx_chain_keys_active" ON "chain_keys" ("is_active");
+-- Create index "idx_chain_keys_address" to table: "chain_keys"
+CREATE INDEX "idx_chain_keys_address" ON "chain_keys" ("address");
+-- Create index "idx_chain_keys_chain" to table: "chain_keys"
+CREATE INDEX "idx_chain_keys_chain" ON "chain_keys" ("chain_id");
+-- Create index "idx_chain_keys_purpose" to table: "chain_keys"
+CREATE INDEX "idx_chain_keys_purpose" ON "chain_keys" ("key_purpose");
 -- Create "chain_repositories" table
 CREATE TABLE "chain_repositories" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -193,6 +219,37 @@ CREATE INDEX "idx_social_chain" ON "chain_social_links" ("chain_id");
 CREATE INDEX "idx_social_platform" ON "chain_social_links" ("platform");
 -- Create index "idx_social_verified" to table: "chain_social_links"
 CREATE INDEX "idx_social_verified" ON "chain_social_links" ("is_verified");
+-- Create "session_tokens" table
+CREATE TABLE "session_tokens" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "user_id" uuid NOT NULL,
+  "token_hash" character varying(64) NOT NULL,
+  "token_prefix" character varying(8) NOT NULL,
+  "user_agent" text NULL,
+  "ip_address" inet NULL,
+  "device_name" character varying(200) NULL,
+  "expires_at" timestamptz NOT NULL,
+  "last_used_at" timestamptz NOT NULL DEFAULT now(),
+  "is_revoked" boolean NOT NULL DEFAULT false,
+  "revoked_at" timestamptz NULL,
+  "revocation_reason" character varying(100) NULL,
+  "jwt_version_snapshot" integer NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY ("id"),
+  CONSTRAINT "unique_token_hash" UNIQUE ("token_hash"),
+  CONSTRAINT "session_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+-- Create index "idx_session_tokens_active" to table: "session_tokens"
+CREATE INDEX "idx_session_tokens_active" ON "session_tokens" ("user_id", "is_revoked", "expires_at") WHERE (is_revoked = false);
+-- Create index "idx_session_tokens_cleanup" to table: "session_tokens"
+CREATE INDEX "idx_session_tokens_cleanup" ON "session_tokens" ("is_revoked", "expires_at");
+-- Create index "idx_session_tokens_expires" to table: "session_tokens"
+CREATE INDEX "idx_session_tokens_expires" ON "session_tokens" ("expires_at") WHERE (is_revoked = false);
+-- Create index "idx_session_tokens_hash" to table: "session_tokens"
+CREATE INDEX "idx_session_tokens_hash" ON "session_tokens" ("token_hash");
+-- Create index "idx_session_tokens_user" to table: "session_tokens"
+CREATE INDEX "idx_session_tokens_user" ON "session_tokens" ("user_id");
 -- Create "virtual_pools" table
 CREATE TABLE "virtual_pools" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -286,3 +343,41 @@ CREATE INDEX "idx_vp_transactions_time" ON "virtual_pool_transactions" ("created
 CREATE INDEX "idx_vp_transactions_type" ON "virtual_pool_transactions" ("transaction_type");
 -- Create index "idx_vp_transactions_user" to table: "virtual_pool_transactions"
 CREATE INDEX "idx_vp_transactions_user" ON "virtual_pool_transactions" ("user_id");
+-- Create "wallets" table
+CREATE TABLE "wallets" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "user_id" uuid NULL,
+  "chain_id" uuid NULL,
+  "address" text NOT NULL,
+  "public_key" text NOT NULL,
+  "encrypted_private_key" text NOT NULL,
+  "salt" bytea NOT NULL,
+  "wallet_name" character varying(100) NULL,
+  "wallet_description" text NULL,
+  "is_active" boolean NOT NULL DEFAULT true,
+  "is_locked" boolean NOT NULL DEFAULT false,
+  "last_used_at" timestamptz NULL,
+  "password_changed_at" timestamptz NULL,
+  "failed_decrypt_attempts" integer NOT NULL DEFAULT 0,
+  "locked_until" timestamptz NULL,
+  "created_by" uuid NULL,
+  "created_at" timestamptz NOT NULL DEFAULT now(),
+  "updated_at" timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY ("id"),
+  CONSTRAINT "wallets_address_key" UNIQUE ("address"),
+  CONSTRAINT "wallets_chain_id_fkey" FOREIGN KEY ("chain_id") REFERENCES "chains" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT "wallets_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT "wallets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT "wallets_check" CHECK ((user_id IS NOT NULL) OR (chain_id IS NOT NULL) OR (created_by IS NOT NULL)),
+  CONSTRAINT "wallets_salt_check" CHECK (octet_length(salt) = 16)
+);
+-- Create index "idx_wallets_active" to table: "wallets"
+CREATE INDEX "idx_wallets_active" ON "wallets" ("is_active");
+-- Create index "idx_wallets_address" to table: "wallets"
+CREATE INDEX "idx_wallets_address" ON "wallets" ("address");
+-- Create index "idx_wallets_chain" to table: "wallets"
+CREATE INDEX "idx_wallets_chain" ON "wallets" ("chain_id") WHERE (chain_id IS NOT NULL);
+-- Create index "idx_wallets_created_by" to table: "wallets"
+CREATE INDEX "idx_wallets_created_by" ON "wallets" ("created_by") WHERE (created_by IS NOT NULL);
+-- Create index "idx_wallets_user" to table: "wallets"
+CREATE INDEX "idx_wallets_user" ON "wallets" ("user_id") WHERE (user_id IS NOT NULL);

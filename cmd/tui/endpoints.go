@@ -62,18 +62,18 @@ type QueryParam struct {
 
 // RequestResult represents the result of an HTTP request
 type RequestResult struct {
-	StatusCode   int
-	Status       string
-	Body         string
-	Headers      http.Header
-	Duration     time.Duration
-	Error        error
-	RequestTime  time.Time
-	RequestURL   string
-	RequestBody  string
+	StatusCode    int
+	Status        string
+	Body          string
+	Headers       http.Header
+	Duration      time.Duration
+	Error         error
+	RequestTime   time.Time
+	RequestURL    string
+	RequestBody   string
 	RequestUserID string
-	Method       HTTPMethod
-	EndpointName string
+	Method        HTTPMethod
+	EndpointName  string
 }
 
 // GetAllEndpoints returns all available endpoints

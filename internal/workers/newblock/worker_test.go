@@ -398,6 +398,32 @@ func (m *MockUserRepository) UpdateLastActive(ctx context.Context, userID uuid.U
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) CreateOrGetByEmail(ctx context.Context, email string) (*models.User, bool, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Bool(1), args.Error(2)
+	}
+	return args.Get(0).(*models.User), args.Bool(1), args.Error(2)
+}
+
+func (m *MockUserRepository) MarkEmailVerified(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) IncrementJWTVersion(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) UpdateProfile(ctx context.Context, userID uuid.UUID, req *models.UpdateProfileRequest) (*models.User, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 // Helper functions to create test fixtures
 
 // setupStandardUserMocks sets up the standard user repository mocks for transaction processing
@@ -485,20 +511,20 @@ func buildTxResultWithNilMessage(recipientAddress []byte, senderAddress []byte) 
 // buildChain creates a test chain with specified parameters
 func buildChain(chainID uuid.UUID, chainName string, creatorID uuid.UUID) *models.Chain {
 	return &models.Chain{
-		ID:                   chainID,
-		ChainName:            chainName,
-		TokenSymbol:          "TEST",
-		ConsensusMechanism:   "PoS",
-		TokenTotalSupply:     1000000000,
-		GraduationThreshold:  100000.0,
-		CreationFeeCNPY:      10.0,
-		InitialCNPYReserve:   30.0,
-		InitialTokenSupply:   800000000,
-		BondingCurveSlope:    0.5,
-		Status:               models.ChainStatusVirtualActive,
-		IsGraduated:          false,
-		CreatedBy:            creatorID,
-		ValidatorMinStake:    1000.0,
+		ID:                  chainID,
+		ChainName:           chainName,
+		TokenSymbol:         "TEST",
+		ConsensusMechanism:  "PoS",
+		TokenTotalSupply:    1000000000,
+		GraduationThreshold: 100000.0,
+		CreationFeeCNPY:     10.0,
+		InitialCNPYReserve:  30.0,
+		InitialTokenSupply:  800000000,
+		BondingCurveSlope:   0.5,
+		Status:              models.ChainStatusVirtualActive,
+		IsGraduated:         false,
+		CreatedBy:           creatorID,
+		ValidatorMinStake:   1000.0,
 	}
 }
 
@@ -532,14 +558,14 @@ func TestWorker_processTransaction(t *testing.T) {
 	senderAddress := []byte{0x05, 0x06, 0x07, 0x08}
 
 	tests := []struct {
-		name           string
-		txResult       *lib.TxResult
-		index          int
-		total          int
-		height         uint64
-		setupMocks     func(chainRepo *MockChainRepository, poolRepo *MockVirtualPoolRepository, userRepo *MockUserRepository)
-		expectedLogs   []string // Expected log patterns (for manual verification)
-		activeForm     string
+		name         string
+		txResult     *lib.TxResult
+		index        int
+		total        int
+		height       uint64
+		setupMocks   func(chainRepo *MockChainRepository, poolRepo *MockVirtualPoolRepository, userRepo *MockUserRepository)
+		expectedLogs []string // Expected log patterns (for manual verification)
+		activeForm   string
 	}{
 		{
 			name:     "successful transaction processing with valid send",

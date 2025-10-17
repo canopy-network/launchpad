@@ -356,6 +356,32 @@ func (m *MockUserRepository) UpdateLastActive(ctx context.Context, userID uuid.U
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) CreateOrGetByEmail(ctx context.Context, email string) (*models.User, bool, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Bool(1), args.Error(2)
+	}
+	return args.Get(0).(*models.User), args.Bool(1), args.Error(2)
+}
+
+func (m *MockUserRepository) MarkEmailVerified(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) IncrementJWTVersion(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) UpdateProfile(ctx context.Context, userID uuid.UUID, req *models.UpdateProfileRequest) (*models.User, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 // MockVirtualPoolTxRepository is a mock implementation with transaction support
 // It embeds MockVirtualPoolRepository to inherit base methods
 type MockVirtualPoolTxRepository struct {

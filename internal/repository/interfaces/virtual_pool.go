@@ -37,15 +37,15 @@ type UserPositionWithAddress struct {
 
 // PoolStateUpdate represents the fields to update in a virtual pool
 type PoolStateUpdate struct {
-	CNPYReserve         *big.Float
-	TokenReserve        *big.Float
-	CurrentPriceCNPY    *big.Float
-	MarketCapUSD        *big.Float
-	TotalVolumeCNPY     *big.Float
-	TotalTransactions   *int
-	UniqueTraders       *int
-	Volume24hCNPY       *big.Float
-	High24hCNPY         *big.Float
-	Low24hCNPY          *big.Float
-	Price24hChangePerc  *big.Float
+	CNPYReserve        *big.Float
+	TokenReserve       *big.Float
+	CurrentPriceCNPY   *big.Float
+	MarketCapUSD       *big.Float
+	TotalVolumeCNPY    *big.Float
+	TotalTransactions  *int
+	UniqueTraders      *int
+	Volume24hCNPY      *big.Float
+	High24hCNPY        *big.Float
+	Low24hCNPY         *big.Float
+	Price24hChangePerc *big.Float
 }

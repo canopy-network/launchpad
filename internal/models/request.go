@@ -36,9 +36,9 @@ type CreateChainRequest struct {
 	WebsiteURL  *string `json:"website_url" validate:"omitempty,url"`
 
 	// Assets
-	WhitepaperURL  *string `json:"whitepaper_url" validate:"omitempty,url"`
-	TokenImageURL  *string `json:"token_image_url" validate:"omitempty,url"`
-	TokenVideoURL  *string `json:"token_video_url" validate:"omitempty,url"`
+	WhitepaperURL *string `json:"whitepaper_url" validate:"omitempty,url"`
+	TokenImageURL *string `json:"token_image_url" validate:"omitempty,url"`
+	TokenVideoURL *string `json:"token_video_url" validate:"omitempty,url"`
 }
 
 // Query parameter structures
