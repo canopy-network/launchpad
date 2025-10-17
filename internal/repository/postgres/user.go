@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/enielson/launchpad/internal/repository/interfaces"
@@ -34,17 +35,18 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) (*models
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
 		) RETURNING id, created_at, updated_at`
 
+	// Sanitize all text fields to prevent null byte errors
 	err := r.db.QueryRowxContext(ctx, query,
-		user.WalletAddress,
-		database.NullString(user.Email),
-		database.NullString(user.Username),
-		database.NullString(user.DisplayName),
-		database.NullString(user.Bio),
-		database.NullString(user.AvatarURL),
-		database.NullString(user.WebsiteURL),
-		database.NullString(user.TwitterHandle),
-		database.NullString(user.GithubUsername),
-		database.NullString(user.TelegramHandle),
+		sanitizeString(user.WalletAddress),
+		database.NullString(sanitizeStringPtr(user.Email)),
+		database.NullString(sanitizeStringPtr(user.Username)),
+		database.NullString(sanitizeStringPtr(user.DisplayName)),
+		database.NullString(sanitizeStringPtr(user.Bio)),
+		database.NullString(sanitizeStringPtr(user.AvatarURL)),
+		database.NullString(sanitizeStringPtr(user.WebsiteURL)),
+		database.NullString(sanitizeStringPtr(user.TwitterHandle)),
+		database.NullString(sanitizeStringPtr(user.GithubUsername)),
+		database.NullString(sanitizeStringPtr(user.TelegramHandle)),
 		user.IsVerified,
 		user.VerificationTier,
 		user.TotalChainsCreated,
@@ -301,8 +303,11 @@ func (r *userRepository) UpdateLastActive(ctx context.Context, userID uuid.UUID)
 
 // CreateOrGetByEmail creates a new user if they don't exist, or returns existing user
 func (r *userRepository) CreateOrGetByEmail(ctx context.Context, email string) (*models.User, bool, error) {
+	// Sanitize email to remove null bytes (PostgreSQL UTF8 doesn't support them)
+	sanitizedEmail := sanitizeString(email)
+
 	// First try to get existing user
-	existingUser, err := r.GetByEmail(ctx, email)
+	existingUser, err := r.GetByEmail(ctx, sanitizedEmail)
 	if err == nil {
 		// User exists
 		return existingUser, false, nil
@@ -310,11 +315,11 @@ func (r *userRepository) CreateOrGetByEmail(ctx context.Context, email string) (
 
 	// User doesn't exist, create a new one
 	// Generate a wallet address placeholder (user can update later)
-	walletAddress := fmt.Sprintf("email_%s", email)
+	walletAddress := fmt.Sprintf("email_%s", sanitizedEmail)
 
 	user := &models.User{
 		WalletAddress:    walletAddress,
-		Email:            &email,
+		Email:            &sanitizedEmail,
 		IsVerified:       false,
 		VerificationTier: models.VerificationTierBasic,
 		JWTVersion:       0,
@@ -323,7 +328,7 @@ func (r *userRepository) CreateOrGetByEmail(ctx context.Context, email string) (
 	createdUser, err := r.Create(ctx, user)
 	if err != nil {
 		// Check if there was a race condition and user was created by another request
-		existingUser, getErr := r.GetByEmail(ctx, email)
+		existingUser, getErr := r.GetByEmail(ctx, sanitizedEmail)
 		if getErr == nil {
 			return existingUser, false, nil
 		}
@@ -596,4 +601,18 @@ func (r *userRepository) buildUserWhereClause(filters interfaces.UserFilters) (s
 	}
 
 	return whereClause, args
+}
+
+// sanitizeString removes null bytes (0x00) from strings to prevent PostgreSQL UTF8 encoding errors
+func sanitizeString(s string) string {
+	return strings.ReplaceAll(s, "\x00", "")
+}
+
+// sanitizeStringPtr removes null bytes from string pointers
+func sanitizeStringPtr(s *string) *string {
+	if s == nil {
+		return nil
+	}
+	cleaned := sanitizeString(*s)
+	return &cleaned
 }

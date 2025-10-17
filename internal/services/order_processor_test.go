@@ -201,6 +201,14 @@ func (m *MockUserRepository) IncrementJWTVersion(ctx context.Context, userID uui
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) UpdateProfile(ctx context.Context, userID uuid.UUID, req *models.UpdateProfileRequest) (*models.User, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.User), args.Error(1)
+}
+
 func TestNewOrderProcessor(t *testing.T) {
 	poolRepo := new(MockVirtualPoolRepository)
 	userRepo := new(MockUserRepository)

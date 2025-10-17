@@ -8,6 +8,7 @@ import (
 
 	"github.com/canopy-network/canopy/lib"
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -80,9 +81,12 @@ func (s *Subscription) GetLatestInfo() *lib.RootChainInfo {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Return a copy to prevent race conditions
-	info := *s.info
-	return &info
+	// Return a deep copy to prevent race conditions and avoid copying mutex
+	// Use proto.Clone to properly copy protobuf messages without copying internal mutexes
+	if s.info == nil {
+		return nil
+	}
+	return proto.Clone(s.info).(*lib.RootChainInfo)
 }
 
 // connectWithBackoff establishes a websocket connection with exponential backoff retry

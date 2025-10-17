@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,12 +65,12 @@ func (s *AuthService) SendEmailCode(ctx context.Context, email string) (string, 
 	// TODO remove later, disable emails for the time being
 	return code, nil
 
-	// Send email
-	if err := s.emailService.SendAuthCode(ctx, email, code); err != nil {
-		return "", fmt.Errorf("failed to send email: %w", err)
-	}
-
-	return code, nil
+	// Send email - currently disabled
+	// if err := s.emailService.SendAuthCode(ctx, email, code); err != nil {
+	// 	return "", fmt.Errorf("failed to send email: %w", err)
+	// }
+	//
+	// return code, nil
 }
 
 // VerifyCode checks if the provided code matches the stored code for the email
@@ -153,12 +154,15 @@ func (s *AuthService) CreateSession(ctx context.Context, userID uuid.UUID, userA
 		}
 	}
 
+	// Sanitize user agent to prevent null byte errors
+	sanitizedUserAgent := sanitizeString(userAgent)
+
 	// Create session token model
 	sessionToken := &models.SessionToken{
 		UserID:             userID,
 		TokenHash:          tokenHash,
 		TokenPrefix:        tokenPrefix,
-		UserAgent:          &userAgent,
+		UserAgent:          &sanitizedUserAgent,
 		IPAddress:          ip,
 		ExpiresAt:          time.Now().Add(30 * 24 * time.Hour), // 30 days
 		LastUsedAt:         time.Now(),
@@ -239,6 +243,11 @@ func (s *AuthService) GetActiveSessions(ctx context.Context, userID uuid.UUID) (
 
 // CompleteEmailLogin completes the email login flow after successful verification
 func (s *AuthService) CompleteEmailLogin(ctx context.Context, email, userAgent, ipAddress string) (*models.LoginResponse, error) {
+	// Sanitize all inputs to prevent null byte errors
+	email = sanitizeString(email)
+	userAgent = sanitizeString(userAgent)
+	ipAddress = sanitizeString(ipAddress)
+
 	// Create or get user
 	user, isNew, err := s.userRepo.CreateOrGetByEmail(ctx, email)
 	if err != nil {
@@ -282,4 +291,9 @@ func (s *AuthService) generateSecureToken(length int) (string, error) {
 func (s *AuthService) hashToken(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:])
+}
+
+// sanitizeString removes null bytes (0x00) from strings to prevent PostgreSQL UTF8 encoding errors
+func sanitizeString(s string) string {
+	return strings.ReplaceAll(s, "\x00", "")
 }
