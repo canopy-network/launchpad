@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/canopy-network/canopy/fsm"
 	"github.com/canopy-network/canopy/lib"
@@ -297,6 +298,14 @@ func (m *MockVirtualPoolRepository) GetPositionsWithUsersByChainID(ctx context.C
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]interfaces.UserPositionWithAddress), args.Error(1)
+}
+
+func (m *MockVirtualPoolRepository) GetPriceHistory(ctx context.Context, chainID uuid.UUID, startTime, endTime time.Time) ([]interfaces.PriceHistoryCandle, error) {
+	args := m.Called(ctx, chainID, startTime, endTime)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]interfaces.PriceHistoryCandle), args.Error(1)
 }
 
 // MockUserRepository mocks the UserRepository interface

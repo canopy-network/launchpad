@@ -183,6 +183,7 @@ func (s *Server) setupRoutes() {
 
 				// Virtual pool endpoints
 				r.Get("/transactions", s.Handlers.ChainHandler.GetTransactions)
+				r.Get("/price-history", s.Handlers.ChainHandler.GetPriceHistory)
 			})
 
 			// Wallet routes

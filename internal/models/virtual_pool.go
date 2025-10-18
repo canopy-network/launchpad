@@ -67,3 +67,20 @@ type UserVirtualLPPosition struct {
 	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
 }
+
+// PriceHistoryCandle represents OHLC data for a time interval
+type PriceHistoryCandle struct {
+	Timestamp  time.Time `json:"timestamp"`
+	Open       float64   `json:"open"`
+	High       float64   `json:"high"`
+	Low        float64   `json:"low"`
+	Close      float64   `json:"close"`
+	Volume     float64   `json:"volume"`
+	TradeCount int       `json:"trade_count"`
+}
+
+// PriceHistoryQueryParams represents query parameters for price history endpoint
+type PriceHistoryQueryParams struct {
+	StartTime *time.Time `json:"start_time"`
+	EndTime   *time.Time `json:"end_time"`
+}

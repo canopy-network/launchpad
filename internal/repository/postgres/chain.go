@@ -212,7 +212,7 @@ func (r *chainRepository) List(ctx context.Context, filters interfaces.ChainFilt
 	whereClause, args := r.buildChainWhereClause(filters)
 
 	// Count query
-	countQuery := "SELECT COUNT(*) FROM chains" + whereClause
+	countQuery := "SELECT COUNT(*) FROM chains c" + whereClause
 	var total int
 	err := r.db.GetContext(ctx, &total, countQuery, args...)
 	if err != nil {

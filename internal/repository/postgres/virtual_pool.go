@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/enielson/launchpad/internal/repository/interfaces"
@@ -497,6 +498,33 @@ func (r *virtualPoolRepository) GetPositionsWithUsersByChainID(ctx context.Conte
 	}
 
 	return results, nil
+}
+
+// GetPriceHistory retrieves OHLC price history aggregated by 1-minute intervals
+func (r *virtualPoolRepository) GetPriceHistory(ctx context.Context, chainID uuid.UUID, startTime, endTime time.Time) ([]interfaces.PriceHistoryCandle, error) {
+	query := `
+		SELECT
+			date_trunc('minute', created_at) as timestamp,
+			(array_agg(price_per_token_cnpy ORDER BY created_at ASC))[1] as open,
+			MAX(price_per_token_cnpy) as high,
+			MIN(price_per_token_cnpy) as low,
+			(array_agg(price_per_token_cnpy ORDER BY created_at DESC))[1] as close,
+			COALESCE(SUM(cnpy_amount), 0) as volume,
+			COUNT(*) as trade_count
+		FROM virtual_pool_transactions
+		WHERE chain_id = $1
+		  AND created_at >= $2
+		  AND created_at < $3
+		GROUP BY date_trunc('minute', created_at)
+		ORDER BY timestamp ASC`
+
+	candles := []interfaces.PriceHistoryCandle{}
+	err := r.db.SelectContext(ctx, &candles, query, chainID, startTime, endTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query price history: %w", err)
+	}
+
+	return candles, nil
 }
 
 // Helper function to convert big.Float to float64 safely

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/enielson/launchpad/internal/repository/interfaces"
@@ -530,6 +531,67 @@ func (s *ChainService) GetTransactions(ctx context.Context, chainID string, user
 	}
 
 	return transactions, paginationResp, nil
+}
+
+// GetPriceHistory retrieves OHLC price history for a chain
+func (s *ChainService) GetPriceHistory(ctx context.Context, chainID string, startTime, endTime *time.Time) ([]models.PriceHistoryCandle, error) {
+	chainUUID, err := uuid.Parse(chainID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid chain ID: %w", err)
+	}
+
+	// Verify chain exists
+	_, err = s.chainRepo.GetByID(ctx, chainUUID, nil)
+	if err != nil {
+		if err.Error() == "chain not found" {
+			return nil, ErrChainNotFound
+		}
+		return nil, fmt.Errorf("failed to get chain: %w", err)
+	}
+
+	// Delegate to virtual pool service (reuse the logic)
+	// Actually, let's call the repository directly since we already have access
+	now := time.Now()
+	var start, end time.Time
+
+	if startTime != nil {
+		start = *startTime
+	} else {
+		start = now.Add(-24 * time.Hour)
+	}
+
+	if endTime != nil {
+		end = *endTime
+	} else {
+		end = now
+	}
+
+	// Validate time range
+	if end.Before(start) || end.Equal(start) {
+		return nil, fmt.Errorf("end_time must be after start_time")
+	}
+
+	// Get price history from repository
+	repoCandles, err := s.virtualPoolRepo.GetPriceHistory(ctx, chainUUID, start, end)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get price history: %w", err)
+	}
+
+	// Convert repository candles to model candles
+	candles := make([]models.PriceHistoryCandle, len(repoCandles))
+	for i, rc := range repoCandles {
+		candles[i] = models.PriceHistoryCandle{
+			Timestamp:  rc.Timestamp,
+			Open:       rc.Open,
+			High:       rc.High,
+			Low:        rc.Low,
+			Close:      rc.Close,
+			Volume:     rc.Volume,
+			TradeCount: rc.TradeCount,
+		}
+	}
+
+	return candles, nil
 }
 
 // Helper methods

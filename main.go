@@ -10,6 +10,7 @@ import (
 	"github.com/enielson/launchpad/internal/repository/postgres"
 	"github.com/enielson/launchpad/internal/server"
 	"github.com/enielson/launchpad/internal/services"
+	"github.com/enielson/launchpad/internal/workers/fakevolume"
 	"github.com/enielson/launchpad/internal/workers/newblock"
 	sessioncleanup "github.com/enielson/launchpad/internal/workers/session_cleanup"
 	"github.com/enielson/launchpad/pkg/client/canopy"
@@ -89,6 +90,17 @@ func main() {
 
 	log.Printf("Started session cleanup worker (interval: %v, retention: %d days)", cleanupConfig.Interval, cleanupConfig.RetentionDays)
 
+	// Initialize and start fake volume worker
+	fakeVolumeConfig := fakevolume.DefaultConfig()
+	fakeVolumeWorker := fakevolume.NewWorker(chainRepo, virtualPoolRepo, userRepo, fakeVolumeConfig)
+
+	if err := fakeVolumeWorker.Start(); err != nil {
+		log.Fatalf("Failed to start fake volume worker: %v", err)
+	}
+	defer fakeVolumeWorker.Stop()
+
+	log.Printf("Started fake volume worker (interval: %v)", fakeVolumeConfig.Interval)
+
 	// Create and start server
 	srv := server.NewServer(cfg, servicesContainer)
 
@@ -117,6 +129,9 @@ func main() {
 		}
 		if err := cleanupWorker.Stop(); err != nil {
 			log.Printf("Error stopping session cleanup worker: %v", err)
+		}
+		if err := fakeVolumeWorker.Stop(); err != nil {
+			log.Printf("Error stopping fake volume worker: %v", err)
 		}
 	case err := <-errChan:
 		log.Fatalf("Server failed to start: %v", err)

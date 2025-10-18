@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/enielson/launchpad/internal/services"
@@ -264,6 +266,28 @@ func (h *ChainHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	response.SuccessWithPagination(w, http.StatusOK, transactions, pagination)
 }
 
+// GetPriceHistory handles GET /api/v1/chains/{id}/price-history
+func (h *ChainHandler) GetPriceHistory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	chainID := chi.URLParam(r, "id")
+
+	// Parse query parameters
+	var params models.PriceHistoryQueryParams
+	if err := h.parsePriceHistoryParams(r, &params); err != nil {
+		response.BadRequest(w, "Invalid query parameters", err.Error())
+		return
+	}
+
+	// Get price history from service
+	candles, err := h.chainService.GetPriceHistory(ctx, chainID, params.StartTime, params.EndTime)
+	if err != nil {
+		h.handleServiceError(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, candles)
+}
+
 // GetAssets handles GET /api/v1/chains/{id}/assets
 func (h *ChainHandler) GetAssets(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -388,6 +412,45 @@ func (h *ChainHandler) parseQueryParams(r *http.Request, params interface{}) err
 	}
 
 	return nil
+}
+
+func (h *ChainHandler) parsePriceHistoryParams(r *http.Request, params *models.PriceHistoryQueryParams) error {
+	// Parse start_time if provided
+	if startTimeStr := r.URL.Query().Get("start_time"); startTimeStr != "" {
+		startTime, err := parseTime(startTimeStr)
+		if err != nil {
+			return err
+		}
+		params.StartTime = &startTime
+	}
+
+	// Parse end_time if provided
+	if endTimeStr := r.URL.Query().Get("end_time"); endTimeStr != "" {
+		endTime, err := parseTime(endTimeStr)
+		if err != nil {
+			return err
+		}
+		params.EndTime = &endTime
+	}
+
+	return nil
+}
+
+// parseTime parses RFC3339/ISO 8601 time strings
+func parseTime(timeStr string) (time.Time, error) {
+	// Try RFC3339 format first (standard format)
+	t, err := time.Parse(time.RFC3339, timeStr)
+	if err == nil {
+		return t, nil
+	}
+
+	// Try RFC3339Nano as fallback
+	t, err = time.Parse(time.RFC3339Nano, timeStr)
+	if err == nil {
+		return t, nil
+	}
+
+	return time.Time{}, fmt.Errorf("invalid time format, expected RFC3339/ISO 8601 (e.g., 2006-01-02T15:04:05Z)")
 }
 
 func (h *ChainHandler) handleServiceError(w http.ResponseWriter, err error) {

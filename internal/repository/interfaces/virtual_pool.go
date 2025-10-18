@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 	"math/big"
+	"time"
 
 	"github.com/enielson/launchpad/internal/models"
 	"github.com/google/uuid"
@@ -27,6 +28,9 @@ type VirtualPoolRepository interface {
 	UpsertUserPosition(ctx context.Context, position *models.UserVirtualLPPosition) error
 	GetPositionsByChainID(ctx context.Context, chainID uuid.UUID, pagination Pagination) ([]models.UserVirtualLPPosition, int, error)
 	GetPositionsWithUsersByChainID(ctx context.Context, chainID uuid.UUID) ([]UserPositionWithAddress, error)
+
+	// Price history operations
+	GetPriceHistory(ctx context.Context, chainID uuid.UUID, startTime, endTime time.Time) ([]PriceHistoryCandle, error)
 }
 
 // PoolStateUpdate represents the fields to update in a virtual pool
@@ -42,4 +46,15 @@ type PoolStateUpdate struct {
 	High24hCNPY        *big.Float
 	Low24hCNPY         *big.Float
 	Price24hChangePerc *big.Float
+}
+
+// PriceHistoryCandle represents OHLC data for a time interval
+type PriceHistoryCandle struct {
+	Timestamp  time.Time `db:"timestamp"`
+	Open       float64   `db:"open"`
+	High       float64   `db:"high"`
+	Low        float64   `db:"low"`
+	Close      float64   `db:"close"`
+	Volume     float64   `db:"volume"`
+	TradeCount int       `db:"trade_count"`
 }
